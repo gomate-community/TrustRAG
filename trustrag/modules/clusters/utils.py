@@ -260,34 +260,34 @@ def generate_report():
         df.to_excel(f"result/{keyword}_cluster_double.xlsx", index=False)
         llm_api = LLMCompressApi(type="title")
         llm_report = LLMCompressApi(type="report")
-        if not os.path.exists(f"result/{keyword}_cluster_level1_index.jsonl"):
-            with open(f"result/{keyword}_cluster_level1_index.jsonl", "w", encoding="utf-8") as f:
-                for index, group in tqdm(df.groupby(by=["cluster_level1_index"])):
-                    if len(group) >= 3:
-                        titles = group["title"][:30].tolist()
-                        contents = group["title"][:5].tolist()
-                        response1 = llm_api.compress(titles, contents)
+        # if not os.path.exists(f"result/{keyword}_cluster_level1_index.jsonl"):
+        with open(f"result/{keyword}_cluster_level1_index.jsonl", "w", encoding="utf-8") as f:
+            for index, group in tqdm(df.groupby(by=["cluster_level1_index"])):
+                if len(group) >= 3:
+                    titles = group["title"][:30].tolist()
+                    contents = group["title"][:5].tolist()
+                    response1 = llm_api.compress(titles, contents)
 
-                        titles = group["title"][:5].tolist()
-                        response2 = llm_report.compress(titles, contents)
-                        urls=group["url"][:5].tolist()
-                        f.write(
-                            json.dumps({"cluster_level1_index": index, "level1_title": response1["response"].strip(),
-                                        "level1_content": response2["response"].strip(),"level1_urls":urls}, ensure_ascii=False) + "\n")
+                    titles = group["title"][:5].tolist()
+                    response2 = llm_report.compress(titles, contents)
+                    urls=group["url"][:5].tolist()
+                    f.write(
+                        json.dumps({"cluster_level1_index": index, "level1_title": response1["response"].strip(),
+                                    "level1_content": response2["response"].strip(),"level1_urls":urls}, ensure_ascii=False) + "\n")
 
-            with open(f"result/{keyword}_cluster_level2_index.jsonl", "w", encoding="utf-8") as f:
-                for index, group in tqdm(df.groupby(by=["cluster_level2_index"])):
-                    if len(group) >= 3:
-                        titles = group["title"][:30].tolist()
-                        contents = group["title"][:5].tolist()
-                        response1 = llm_api.compress(titles, contents)
-                        titles = group["title"][:5].tolist()
-                        response2 = llm_report.compress(titles, contents)
-                        urls=group["url"][:5].tolist()
+        with open(f"result/{keyword}_cluster_level2_index.jsonl", "w", encoding="utf-8") as f:
+            for index, group in tqdm(df.groupby(by=["cluster_level2_index"])):
+                if len(group) >= 3:
+                    titles = group["title"][:30].tolist()
+                    contents = group["title"][:5].tolist()
+                    response1 = llm_api.compress(titles, contents)
+                    titles = group["title"][:5].tolist()
+                    response2 = llm_report.compress(titles, contents)
+                    urls=group["url"][:5].tolist()
 
-                        f.write(
-                            json.dumps({"cluster_level2_index": index, "level2_title": response1["response"].strip(),
-                                        "level2_content": response2["response"].strip(),"level2_urls":urls}, ensure_ascii=False) + "\n")
+                    f.write(
+                        json.dumps({"cluster_level2_index": index, "level2_title": response1["response"].strip(),
+                                    "level2_content": response2["response"].strip(),"level2_urls":urls}, ensure_ascii=False) + "\n")
 
 
 def insert_mongo_report():
@@ -411,12 +411,12 @@ def main():
 
 
 def sing_run():
-    # get_es_data()
-    # run_cluster_data()
-    # generate_report()
+    get_es_data()
+    run_cluster_data()
+    generate_report()
     insert_mongo_report()
-
+    pass
 
 if __name__ == '__main__':
-    sing_run()
+    # sing_run()
     main()
