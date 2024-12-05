@@ -11,7 +11,7 @@ import random
 
 import numpy as np
 from joblib import Parallel, delayed
-from libraries.timer import *
+from trustrag.modules.clusters.libraries.timer import *
 from tqdm import tqdm
 
 tqdm.pandas()

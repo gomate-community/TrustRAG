@@ -1,6 +1,6 @@
 import sys
 
-sys.path.append("/data/users/searchgpt/yq/TrustRAG")
+sys.path.append("/data/users/searchgpt/yq/trustrag")
 import json
 import os
 import time
@@ -15,7 +15,7 @@ import requests
 from bson import ObjectId
 from tqdm import tqdm
 import loguru
-from singlepass import SGCluster
+from trustrag.modules.clusters.singlepass import SGCluster
 from datetime import datetime
 import uuid
 

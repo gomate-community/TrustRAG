@@ -8,7 +8,7 @@ import os
 
 import pandas as pd
 from tqdm import tqdm
-from libraries.utils import find_lcsubstr
+from trustrag.modules.clusters.libraries.utils import find_lcsubstr
 
 
 def load_corpus():

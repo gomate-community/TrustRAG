@@ -4,7 +4,7 @@
 # email:yanqiangmiffy@gmail.com
 # datetime:2021/5/25 11:38
 # description:"通用打印函数"
-from libraries.timer import get_now_time
+from trustrag.modules.clusters.libraries.timer import get_now_time
 
 
 def usual_print(msg=None, prompt=None):
