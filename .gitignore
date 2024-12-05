@@ -23,3 +23,5 @@ examples/retrievers/indexs
 output
 examples/rag/indexs
 examples/rag/mobile_rag.py
+trustrag/modules/clusters/result
+trustrag/modules/clusters/data

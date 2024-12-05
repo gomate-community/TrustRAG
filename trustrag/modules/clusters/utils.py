@@ -21,9 +21,9 @@ import uuid
 
 keywords = [
     "美国",
-    "中美贸易",
-    "俄罗斯",
-    "中东",
+    # "中美贸易",
+    # "俄罗斯",
+    # "中东",
 ]
 
 
@@ -256,6 +256,11 @@ def generate_report():
                 df = pd.read_excel(f"result/{file}")
                 dfs.append(df)
         df = pd.concat(dfs, axis=0).reset_index(drop=True)
+        df['cluster_level2_index']='level2_index'+'_'+df['cluster_level1_index'].astype(str)+'_'+df['cluster_level2_index'].astype(str)
+        df['cluster_level1_index']='level1_index'+'_'+df['cluster_level1_index'].astype(str)
+
+        loguru.logger.info(df['cluster_level1_index'].nunique())
+        loguru.logger.info(df['cluster_level2_index'].nunique())
 
         df.to_excel(f"result/{keyword}_cluster_double.xlsx", index=False)
         llm_api = LLMCompressApi(type="title")
@@ -263,7 +268,8 @@ def generate_report():
         # if not os.path.exists(f"result/{keyword}_cluster_level1_index.jsonl"):
         with open(f"result/{keyword}_cluster_level1_index.jsonl", "w", encoding="utf-8") as f:
             for index, group in tqdm(df.groupby(by=["cluster_level1_index"])):
-                if len(group) >= 3:
+                # print(index,len(group))
+                if len(group) >= 5:
                     titles = group["title"][:30].tolist()
                     contents = group["title"][:5].tolist()
                     response1 = llm_api.compress(titles, contents)
@@ -272,21 +278,20 @@ def generate_report():
                     response2 = llm_report.compress(titles, contents)
                     urls=group["url"][:5].tolist()
                     f.write(
-                        json.dumps({"cluster_level1_index": index, "level1_title": response1["response"].strip(),
+                        json.dumps({"cluster_level1_index": index[0], "level1_title": response1["response"].strip(),
                                     "level1_content": response2["response"].strip(),"level1_urls":urls}, ensure_ascii=False) + "\n")
 
         with open(f"result/{keyword}_cluster_level2_index.jsonl", "w", encoding="utf-8") as f:
             for index, group in tqdm(df.groupby(by=["cluster_level2_index"])):
-                if len(group) >= 3:
+                if len(group) >= 2:
                     titles = group["title"][:30].tolist()
                     contents = group["title"][:5].tolist()
                     response1 = llm_api.compress(titles, contents)
                     titles = group["title"][:5].tolist()
                     response2 = llm_report.compress(titles, contents)
                     urls=group["url"][:5].tolist()
-
                     f.write(
-                        json.dumps({"cluster_level2_index": index, "level2_title": response1["response"].strip(),
+                        json.dumps({"cluster_level2_index": index[0], "level2_title": response1["response"].strip(),
                                     "level2_content": response2["response"].strip(),"level2_urls":urls}, ensure_ascii=False) + "\n")
 
 
@@ -296,8 +301,10 @@ def insert_mongo_report():
         with open(f"data/{keyword}_data.json", "r", encoding="utf-8") as f:
             sources = json.load(f)
         try:
-            loguru.logger.info("正在插入MongoDB成功：" + keyword)
+            loguru.logger.info("正在插入MongoDB：" + keyword)
             df = pd.read_excel(f"result/{keyword}_cluster_double.xlsx")
+            loguru.logger.info(df['cluster_level1_index'].nunique())
+            loguru.logger.info(df['cluster_level2_index'].nunique())
             level1_mapping = {}
             with open(f"result/{keyword}_cluster_level1_index.jsonl", 'r', encoding='utf-8') as f:
                 for line in f.readlines():
@@ -312,11 +319,14 @@ def insert_mongo_report():
             with open(f"result/{keyword}_cluster_level2_index.jsonl", 'r', encoding='utf-8') as f:
                 for line in f.readlines():
                     data = json.loads(line.strip())
+                    # print(data)
                     level2_mapping[data['cluster_level2_index']] = {
                         'level2_title': data['level2_title'],
                         'level2_content': data['level2_content'],
                         'level2_urls': data['level2_urls'],
                     }
+            loguru.logger.info(len(level1_mapping))
+            loguru.logger.info(len(level2_mapping))
 
             df['level1_title'] = df['cluster_level1_index'].apply(
                 lambda x: level1_mapping.get(x, {}).get('level1_title', ''))
@@ -330,7 +340,8 @@ def insert_mongo_report():
             df['level2_content'] = df['cluster_level2_index'].apply(
                 lambda x: level2_mapping.get(x, {}).get('level2_content', ''))
             df['level2_urls'] = df['cluster_level2_index'].apply(
-                lambda x: level1_mapping.get(x, {}).get('level2_urls', []))
+                lambda x: level2_mapping.get(x, {}).get('level2_urls', []))
+
             # 查看结果
             # 获取当前日期并格式化为 YYYYMMDD 格式
             current_date = datetime.now().strftime("%Y%m%d")
@@ -351,24 +362,37 @@ def insert_mongo_report():
                 "articles": sources
             }
             contents = []
+            print(df.shape)
+            df.to_excel(f'result/{keyword}_mongo.xlsx', index=False)
+
             for level1_index, group1 in df.groupby(by=["cluster_level1_index"]):
                 nodes = []
                 for level2_index, group2 in group1.groupby(by=["cluster_level2_index"]):
-                    nodes.append(
-                        {
-                            'title': group2['level2_title'].unique()[0],
-                            'content': group2['level2_content'].unique()[0],
-                            'level2_urls': group2['level2_urls'].values.tolist()
-                        }
-                    )
-                contents.append({
-                    'title': group1['level1_title'].unique()[0],
-                    'content': group1['level1_content'].unique()[0],
-                    'level1_urls': group1['level1_urls'].values.tolist(),
-                    'nodes': nodes
-                })
+                    if len(group2['level2_title'].unique()[0])>0 and \
+                        len(group2['level2_content'].unique()[0]) > 0:
+                        nodes.append(
+                            {
+                                'title': group2['level2_title'].unique()[0],
+                                'content': group2['level2_content'].unique()[0],
+                                'level2_urls': group2['level2_urls'].values.tolist()[0]
+                            }
+                        )
+
+                if len(group1['level1_title'].unique()[0]) > 0 and \
+                        len(group1['level1_content'].unique()[0]) > 0 and \
+                        len(group1['level1_urls'].values.tolist()[0]) > 0:
+                    if len(nodes) > 0:
+                        # print(len(nodes))
+                        contents.append({
+                            'title': group1['level1_title'].unique()[0],
+                            'content': group1['level1_content'].unique()[0],
+                            'level1_urls': group1['level1_urls'].values.tolist()[0],
+                            'nodes': nodes
+                        })
+
             template['content'] = contents
             mc.insert_one(template, 'report')
+            loguru.logger.info("插入MongoDB成功：" + keyword)
         except Exception as e:
             loguru.logger.error(e)
             loguru.logger.error("插入MongoDB失败:" + keyword)
@@ -411,12 +435,13 @@ def main():
 
 
 def sing_run():
-    get_es_data()
-    run_cluster_data()
-    generate_report()
+    # get_es_data()
+    # run_cluster_data()
+    # generate_report()
     insert_mongo_report()
     pass
 
 if __name__ == '__main__':
-    # sing_run()
+    sing_run()
     main()
+
