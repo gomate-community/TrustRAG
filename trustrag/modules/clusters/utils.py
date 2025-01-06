@@ -7,6 +7,7 @@ import time
 from datetime import date
 from datetime import datetime
 from datetime import datetime, time
+from datetime import datetime, timedelta
 
 from apscheduler.schedulers.blocking import BlockingScheduler
 from apscheduler.triggers.cron import CronTrigger
@@ -27,6 +28,12 @@ keywords = [
     "俄罗斯",
     "中东",
 ]
+keywords_phrase = {
+    "美国":["美国","特朗普","拜登"],
+    "中美贸易":["中美","中国 美国","中 美"],
+    "俄罗斯":["俄罗斯","乌克兰","俄 乌"],
+    "中东":["中东","中 东","东亚"],
+}
 
 
 class NpEncoder(json.JSONEncoder):
@@ -204,11 +211,12 @@ def get_es_data():
         # url = f"http://10.208.61.117:9200/document_share_data_30_news/_search?q={word}&size=6000&sort=publish_time:desc"
         # url = f"http://10.208.61.117:9200/goinv3_document_news/_search?q={word}&sort=publish_time:desc&size=2000"
 
-        # 获取今天晚上的时间戳
-        today = datetime.now()
-        today_evening = today.replace(hour=23, minute=59, second=59)
-        timestamp = int(today_evening.timestamp() * 1000)  # 转换为毫秒级时间戳
-
+        # 获取昨天晚上的时间戳
+        yesterday = datetime.now() - timedelta(days=1)
+        yesterday_evening = yesterday.replace(hour=23, minute=59, second=59)
+        timestamp = int(yesterday_evening.timestamp() * 1000)  # 转换为毫秒级时间戳
+        should_match=[{"match_phrase":{"title":key_w}}  for key_w in keywords_phrase[word]]
+        loguru.logger.info(should_match)
         url = "http://10.208.61.117:9200/goinv3_document_news/_search"
 
         body = {
@@ -217,13 +225,7 @@ def get_es_data():
                     "must": [
                         {
                             "bool": {
-                                "should": [
-                                    {
-                                        "match_phrase": {
-                                            "title": word
-                                        }
-                                    }
-                                ]
+                                "should": should_match
                             }
                         },
                         {
@@ -240,7 +242,7 @@ def get_es_data():
             "_source": ["title", "content", "url", "date", "title_origin", "content_origin", "publish_time"],
             "size": 2000
         }
-
+        loguru.logger.info(body)
         response = requests.post(url, json=body)
         print(response)
         # response = requests.get(url)
