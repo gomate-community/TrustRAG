@@ -219,7 +219,17 @@ def get_es_data():
             "query": {
                 "bool": {
                     "must": [
-                        {"query_string": {"query": word}},
+                        {
+                            "bool": {
+                                "should": [
+                                    {
+                                        "match_phrase": {
+                                            "title": word
+                                        }
+                                    },
+                                ]
+                            }
+                        },
                         {
                             "range": {
                                 "publish_time": {
@@ -231,7 +241,8 @@ def get_es_data():
                     ]
                 }
             },
-            "sort": [{"publish_time": "desc"}],
+            "sort": [{"publish_time": {"order": "desc"}}],
+            "_source": ["title", "content", "url", "date", "title_origin", "content_origin", "publish_time"],
             "size": 2000
         }
         response = requests.post(url, json=body)
