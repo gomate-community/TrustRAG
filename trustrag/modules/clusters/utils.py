@@ -478,9 +478,9 @@ def main():
 
 
 def sing_run():
-    # get_es_data()
-    # run_cluster_data()
-    # generate_report()
+    get_es_data()
+    run_cluster_data()
+    generate_report()
     insert_mongo_report()
     pass
 
