@@ -150,7 +150,7 @@ class LLMCompressApi():
             3. 不要以"新闻摘要："开头，直接生成摘要即可
 
             ##参考新闻素材内容:
-            {titles}
+            {contexts}
 
             ##新闻摘要:
 
