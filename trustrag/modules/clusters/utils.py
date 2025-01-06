@@ -21,9 +21,9 @@ import uuid
 
 keywords = [
     "美国",
-    # "中美贸易",
-    # "俄罗斯",
-    # "中东",
+    "中美贸易",
+    "俄罗斯",
+    "中东",
 ]
 
 
@@ -415,7 +415,7 @@ def insert_mongo_report():
                             {
                                 'title': group2['level2_title'].unique()[0],
                                 'content': group2['level2_content'].unique()[0],
-                                'abstract': group2['level2_abstract'].unique()[0],
+                                # 'abstract': group2['level2_abstract'].unique()[0],
                                 'level2_urls': group2['level2_urls'].values.tolist()[0]
                             }
                         )
@@ -428,7 +428,7 @@ def insert_mongo_report():
                         contents.append({
                             'title': group1['level1_title'].unique()[0],
                             'content': group1['level1_content'].unique()[0],
-                            'abstract': group1['level1_abstract'].unique()[0],
+                            # 'abstract': group1['level1_abstract'].unique()[0],
                             'level1_urls': group1['level1_urls'].values.tolist()[0],
                             'nodes': nodes
                         })
