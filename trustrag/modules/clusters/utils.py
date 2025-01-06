@@ -129,26 +129,42 @@ class LLMCompressApi():
         self.type = type
         if self.type == "title":
             self.prompt_template = """
-            分析以下新闻标题列表,提取它们的共同主题。生成一个简洁、准确且不超过10个字的主题标题。
+            分析以下参考新闻标题列表,提取它们的共同主题。生成一个简洁、准确且不超过10个字的主题标题。
             注意：
             1. 生成标题首尾不要带有引号，中间可以带有引号
             2. 如果输入标题内容是英文，请用中文编写
-            
-            ##新闻标题列表:
+            3. 不要以"主题标题："开头，直接生成标题即可
+
+            ##参考新闻标题列表:
             {titles}
             
             ##主题标题:
             
             """
+        elif self.type == "abstract":
+            self.prompt_template = """
+            分析以下参考参考新闻素材内容,提取它们的共同主题。生成一个简洁的新闻摘要，不少于30字。
+            注意：
+            1. 生成摘要首尾不要带有引号，中间可以带有引号
+            2. 如果输入摘要内容是英文，请用中文编写
+            3. 不要以"新闻摘要："开头，直接生成摘要即可
+
+            ##参考新闻素材内容:
+            {titles}
+
+            ##新闻摘要:
+
+            """
         else:
             self.prompt_template = """
-            请根据以下提供的新闻素材，编写一份主题报告，内容贴切主题内容，如果输入标题内容是英文，请用中文编写，不少于50字。
+            请根据以下提供的新闻素材内容，提取它们的共同主题，编写一份主题报告，内容贴切主题内容，如果输入标题内容是英文，请用中文编写，不少于50字。
             
             注意：
             1. 文章开头或者结尾不要生成额外修饰词
             2. 主题内容越多多好，尽量全面详细
+            3. 不要以"主题内容："开头，直接生成具体内容即可。
             
-            ##新闻素材:
+            ##参考新闻素材内容:
             {contexts}
 
             ##主题内容:
@@ -265,6 +281,7 @@ def generate_report():
         df.to_excel(f"result/{keyword}_cluster_double.xlsx", index=False)
         llm_api = LLMCompressApi(type="title")
         llm_report = LLMCompressApi(type="report")
+        llm_abstract = LLMCompressApi(type="abstract")
         # if not os.path.exists(f"result/{keyword}_cluster_level1_index.jsonl"):
         with open(f"result/{keyword}_cluster_level1_index.jsonl", "w", encoding="utf-8") as f:
             for index, group in tqdm(df.groupby(by=["cluster_level1_index"])):
@@ -276,10 +293,19 @@ def generate_report():
 
                     titles = group["title"][:5].tolist()
                     response2 = llm_report.compress(titles, contents)
+
+                    titles = group["title"][:5].tolist()
+                    response3 = llm_abstract.compress(titles, contents)
+
                     urls=group["url"][:5].tolist()
                     f.write(
-                        json.dumps({"cluster_level1_index": index[0], "level1_title": response1["response"].strip(),
-                                    "level1_content": response2["response"].strip(),"level1_urls":urls}, ensure_ascii=False) + "\n")
+                        json.dumps({
+                            "cluster_level1_index": index[0],
+                            "level1_title": response1["response"].strip(),
+                            "level1_content": response2["response"].strip(),
+                            "level1_abstract": response3["response"].strip(),
+                            "level1_urls":urls
+                        }, ensure_ascii=False) + "\n")
 
         with open(f"result/{keyword}_cluster_level2_index.jsonl", "w", encoding="utf-8") as f:
             for index, group in tqdm(df.groupby(by=["cluster_level2_index"])):
@@ -289,10 +315,19 @@ def generate_report():
                     response1 = llm_api.compress(titles, contents)
                     titles = group["title"][:5].tolist()
                     response2 = llm_report.compress(titles, contents)
+
+                    titles = group["title"][:5].tolist()
+                    response3 = llm_abstract.compress(titles, contents)
+
                     urls=group["url"][:5].tolist()
                     f.write(
-                        json.dumps({"cluster_level2_index": index[0], "level2_title": response1["response"].strip(),
-                                    "level2_content": response2["response"].strip(),"level2_urls":urls}, ensure_ascii=False) + "\n")
+                        json.dumps({
+                            "cluster_level2_index": index[0],
+                            "level2_title": response1["response"].strip(),
+                            "level2_content": response2["response"].strip(),
+                            "level2_abstract": response3["response"].strip(),
+                            "level2_urls":urls},
+                            ensure_ascii=False) + "\n")
 
 
 def insert_mongo_report():
@@ -312,6 +347,7 @@ def insert_mongo_report():
                     level1_mapping[data['cluster_level1_index']] = {
                         'level1_title': data['level1_title'],
                         'level1_content': data['level1_content'],
+                        'level1_abstract': data['level1_abstract'],
                         'level1_urls': data['level1_urls'],
                     }
 
@@ -323,6 +359,7 @@ def insert_mongo_report():
                     level2_mapping[data['cluster_level2_index']] = {
                         'level2_title': data['level2_title'],
                         'level2_content': data['level2_content'],
+                        'level2_abstract': data['level2_abstract'],
                         'level2_urls': data['level2_urls'],
                     }
             loguru.logger.info(len(level1_mapping))
@@ -332,6 +369,8 @@ def insert_mongo_report():
                 lambda x: level1_mapping.get(x, {}).get('level1_title', ''))
             df['level1_content'] = df['cluster_level1_index'].apply(
                 lambda x: level1_mapping.get(x, {}).get('level1_content', ''))
+            df['level1_abstract'] = df['cluster_level1_index'].apply(
+                lambda x: level1_mapping.get(x, {}).get('level1_abstract', ''))
             df['level1_urls'] = df['cluster_level1_index'].apply(
                 lambda x: level1_mapping.get(x, {}).get('level1_urls', []))
 
@@ -339,6 +378,8 @@ def insert_mongo_report():
                 lambda x: level2_mapping.get(x, {}).get('level2_title', ''))
             df['level2_content'] = df['cluster_level2_index'].apply(
                 lambda x: level2_mapping.get(x, {}).get('level2_content', ''))
+            df['level2_abstract'] = df['cluster_level2_index'].apply(
+                lambda x: level2_mapping.get(x, {}).get('level2_abstract', ''))
             df['level2_urls'] = df['cluster_level2_index'].apply(
                 lambda x: level2_mapping.get(x, {}).get('level2_urls', []))
 
@@ -374,6 +415,7 @@ def insert_mongo_report():
                             {
                                 'title': group2['level2_title'].unique()[0],
                                 'content': group2['level2_content'].unique()[0],
+                                'abstract': group2['level2_abstract'].unique()[0],
                                 'level2_urls': group2['level2_urls'].values.tolist()[0]
                             }
                         )
@@ -386,6 +428,7 @@ def insert_mongo_report():
                         contents.append({
                             'title': group1['level1_title'].unique()[0],
                             'content': group1['level1_content'].unique()[0],
+                            'abstract': group1['level1_abstract'].unique()[0],
                             'level1_urls': group1['level1_urls'].values.tolist()[0],
                             'nodes': nodes
                         })
