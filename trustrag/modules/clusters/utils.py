@@ -6,6 +6,8 @@ import os
 import time
 from datetime import date
 from datetime import datetime
+from datetime import datetime, time
+
 from apscheduler.schedulers.blocking import BlockingScheduler
 from apscheduler.triggers.cron import CronTrigger
 import numpy as np
@@ -200,8 +202,40 @@ def get_es_data():
     for word in keywords:
         loguru.logger.info("正在获取es数据：" + word)
         # url = f"http://10.208.61.117:9200/document_share_data_30_news/_search?q={word}&size=6000&sort=publish_time:desc"
-        url = f"http://10.208.61.117:9200/goinv3_document_news/_search?q={word}&sort=publish_time:desc&size=2000"
-        response = requests.get(url)
+        # url = f"http://10.208.61.117:9200/goinv3_document_news/_search?q={word}&sort=publish_time:desc&size=2000"
+
+        # 获取今天的开始时间(0点)
+        today_start = datetime.combine(datetime.now().date(), time.min)
+        # 当前时间
+        now = datetime.now()
+
+        # 格式化时间
+        from_time = today_start.strftime("%Y-%m-%dT%H:%M:%S")
+        to_time = now.strftime("%Y-%m-%dT%H:%M:%S")
+
+        url = "http://10.208.61.117:9200/goinv3_document_news/_search"
+
+        body = {
+            "query": {
+                "bool": {
+                    "must": [
+                        {"query_string": {"query": word}},
+                        {
+                            "range": {
+                                "publish_time": {
+                                    "gte": from_time,
+                                    "lte": to_time
+                                }
+                            }
+                        }
+                    ]
+                }
+            },
+            "sort": [{"publish_time": "desc"}],
+            "size": 2000
+        }
+        response = requests.post(url, json=body)
+        # response = requests.get(url)
         with open(f"data/{word}_data.json", "w", encoding="utf-8") as f:
             json.dump(response.json(), f, ensure_ascii=False, indent=4)
 
