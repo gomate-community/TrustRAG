@@ -204,14 +204,10 @@ def get_es_data():
         # url = f"http://10.208.61.117:9200/document_share_data_30_news/_search?q={word}&size=6000&sort=publish_time:desc"
         # url = f"http://10.208.61.117:9200/goinv3_document_news/_search?q={word}&sort=publish_time:desc&size=2000"
 
-        # 获取今天的开始时间(0点)
-        today_start = datetime.combine(datetime.now().date(), time.min)
-        # 当前时间
-        now = datetime.now()
-
-        # 格式化时间
-        from_time = today_start.strftime("%Y-%m-%dT%H:%M:%S")
-        to_time = now.strftime("%Y-%m-%dT%H:%M:%S")
+        # 获取今天晚上的时间戳
+        today = datetime.now()
+        today_evening = today.replace(hour=23, minute=59, second=59)
+        timestamp = int(today_evening.timestamp() * 1000)  # 转换为毫秒级时间戳
 
         url = "http://10.208.61.117:9200/goinv3_document_news/_search"
 
@@ -226,15 +222,14 @@ def get_es_data():
                                         "match_phrase": {
                                             "title": word
                                         }
-                                    },
+                                    }
                                 ]
                             }
                         },
                         {
                             "range": {
                                 "publish_time": {
-                                    "gte": from_time,
-                                    "lte": to_time
+                                    "gte": timestamp
                                 }
                             }
                         }
@@ -245,7 +240,9 @@ def get_es_data():
             "_source": ["title", "content", "url", "date", "title_origin", "content_origin", "publish_time"],
             "size": 2000
         }
+
         response = requests.post(url, json=body)
+        print(response)
         # response = requests.get(url)
         with open(f"data/{word}_data.json", "w", encoding="utf-8") as f:
             json.dump(response.json(), f, ensure_ascii=False, indent=4)
