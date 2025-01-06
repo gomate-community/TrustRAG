@@ -5,8 +5,6 @@ import json
 import os
 import time
 from datetime import date
-from datetime import datetime
-from datetime import datetime, time
 from datetime import datetime, timedelta
 
 from apscheduler.schedulers.blocking import BlockingScheduler
@@ -19,7 +17,6 @@ from bson import ObjectId
 from tqdm import tqdm
 import loguru
 from trustrag.modules.clusters.singlepass import SGCluster
-from datetime import datetime
 import uuid
 
 keywords = [
@@ -522,9 +519,9 @@ def main():
 
 
 def sing_run():
-    get_es_data()
-    run_cluster_data()
-    generate_report()
+    # get_es_data()
+    # run_cluster_data()
+    # generate_report()
     insert_mongo_report()
     pass
 
