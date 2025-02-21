@@ -314,8 +314,18 @@ app后台日志：
 
 <img src="https://raw.githubusercontent.com/yanqiangmiffy/Chinese-LangChain/master/images/personal.jpg" width="180px">
 
-## 致谢
+## 💗致谢
 >本项目感谢以下开源项目的支持与贡献：
 - 文档解析：[infiniflow/ragflow](https://github.com/infiniflow/ragflow/blob/main/deepdoc/README.md)
 - PDF文件解析[opendatalab/MinerU](https://github.com/opendatalab/MinerU)
 
+## 👉 Citation
+```text
+@article{fan2025trustrag,
+  title={TrustRAG: An Information Assistant with Retrieval Augmented Generation},
+  author={Fan, Yixing and Yan, Qiang and Wang, Wenshan and Guo, Jiafeng and Zhang, Ruqing and Cheng, Xueqi},
+  journal={arXiv preprint arXiv:2502.13719},
+  year={2025},
+  url={https://arxiv.org/abs/2502.13719}
+}
+```
