@@ -127,3 +127,37 @@ class DashScopeChat(Base):
     def __init__(self, key, model_name="qwen-plus", base_url="https://dashscope.aliyuncs.com/compatible-mode/v1"):
         if not base_url: base_url="https://dashscope.aliyuncs.com/compatible-mode/v1"
         super().__init__(key, model_name, base_url)
+
+class VolcengineChat(Base):
+    """
+    https://console.volcengine.com/ark/region:ark+cn-beijing/endpoint
+    """
+    def __init__(self, key, model_name="deepseek-r1-250120", base_url="https://ark.cn-beijing.volces.com/api/v3"):
+        if not base_url: base_url="https://ark.cn-beijing.volces.com/api/v3"
+        super().__init__(key, model_name, base_url)
+
+
+
+if __name__ == '__main__':
+
+
+    import os
+    from openai import OpenAI
+
+    client = OpenAI(
+        api_key="xx",
+        base_url="https://ark.cn-beijing.volces.com/api/v3",
+    )
+
+    # Non-streaming:
+    print("----- standard request -----")
+    completion = client.chat.completions.create(
+        model="deepseek-r1-250120",  # your model endpoint ID
+        messages=[
+            {"role": "system", "content": "你是人工智能助手"},
+            {"role": "user", "content": "常见的十字花科植物有哪些？"},
+        ],
+    )
+    print(completion.choices)
+    print(completion.choices[0].message.content)
+
