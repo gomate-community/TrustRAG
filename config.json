@@ -1,0 +1,35 @@
+{
+    "services": {
+        "dmx": {
+            "base_url": "https://www.dmxapi.com/v1",
+            "api_key": "sk-gDbFoQAYz9pwqBsH0aPA1H8DN9s0B9F3vWNjjPcijRBFjk7f",
+            "description": "DMX API 服务"
+        },
+        "rerank": {
+            "base_url": "http://localhost:3600",
+            "api_key": "sk-XTcBLdakFcZjdQTt7e29Ca9bF8F1495dB447E3Af023cF4E6",
+            "description": "重排序服务"
+        }
+    },
+    "models": {
+        "llm": {
+            "name": "gpt-4o-all",
+            "service": "dmx",
+            "description": "主要的 LLM 模型"
+        },
+        "embedding": {
+            "name": "text-embedding-3-large",
+            "service": "dmx",
+            "description": "文本嵌入模型"
+        },
+        "reranker": {
+            "name": "BAAI/bge-reranker-v2-m3",
+            "service": "rerank",
+            "description": "BGE重排序模型"
+        }
+    },
+    "paths": {
+        "docs": "./data/docs",
+        "index": "./examples/retrievers/dense_cache"
+    }
+}
