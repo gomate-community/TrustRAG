@@ -307,7 +307,19 @@ If the group is full or for cooperation and exchange, please contact:
 
 <img src="https://raw.githubusercontent.com/yanqiangmiffy/Chinese-LangChain/master/images/personal.jpg" width="180px">
 
-## Acknowledgments
+## 💗Acknowledgments
 >This project thanks the following open-source projects for their support and contributions:
 - Document parsing: [infiniflow/ragflow](https://github.com/infiniflow/ragflow/blob/main/deepdoc/README.md)
 - PDF file parsing: [opendatalab/MinerU](https://github.com/opendatalab/MinerU)
+
+
+## 👉 Citation
+```text
+@article{fan2025trustrag,
+  title={TrustRAG: An Information Assistant with Retrieval Augmented Generation},
+  author={Fan, Yixing and Yan, Qiang and Wang, Wenshan and Guo, Jiafeng and Zhang, Ruqing and Cheng, Xueqi},
+  journal={arXiv preprint arXiv:2502.13719},
+  year={2025},
+  url={https://arxiv.org/abs/2502.13719}
+}
+```

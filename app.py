@@ -23,7 +23,7 @@ from datetime import datetime
 import pytz
 # ========================== Config Start====================
 app_config = ApplicationConfig()
-app_config.docs_path = r"H:\Projects\TrustRAG\data\docs"
+app_config.docs_path = r"G:\Projects\TrustRAG\data\docs"
 app_config.base_url = "https://www.dmxapi.com/v1"
 app_config.api_key = "sk-gDbFoQAYz9pwqBsH0aPA1H8DN9s0B9F3vWNjjPcijRBFjk7f"
 app_config.model_name = "gpt-4o-all"
@@ -33,7 +33,7 @@ retriever_config = DenseRetrieverConfig(
     base_url="https://www.dmxapi.com/v1",
     api_key= "sk-gDbFoQAYz9pwqBsH0aPA1H8DN9s0B9F3vWNjjPcijRBFjk7f",
     embedding_model_name='text-embedding-3-large',
-    index_path=r'H:\Projects\TrustRAG\examples\retrievers\dense_cache'
+    index_path=r'G:\Projects\TrustRAG\examples\retrievers\dense_cache'
 )
 # rerank_config = BgeRerankerConfig(
 #     model_name_or_path=r"H:\pretrained_models\mteb\bge-reranker-large"
@@ -531,7 +531,7 @@ with gr.Blocks(theme="soft") as demo:
                     send = gr.Button("🚀 Send")
                 with gr.Row():
                     gr.Markdown(
-                        """>Remind：[TrustRAG Application](https://github.com/TrustRAG-community/TrustRAG)If you have any questions, please provide feedback in [Github Issue区](https://github.com/TrustRAG-community/TrustRAG) .""")
+                        """>Remind：[TrustRAG Application](https://github.com/gomate-community/TrustRAG/issues)If you have any questions, please provide feedback in [Github Issue区](https://github.com/gomate-community/TrustRAG/issues) .""")
             with gr.Column(scale=2):
                 with gr.Row():
                     rewrite = gr.Textbox(label='Query Reformulate')

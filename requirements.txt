@@ -66,3 +66,4 @@ qdrant-client
 qdrant-client[fastembed]
 pymilvus
 chromadb
+langdetect
