@@ -16,6 +16,8 @@ from api.apps.core.citation.bodys import CitationBody
 from api.apps.handle.response.json_response import ApiResponse
 from trustrag.modules.citation.match_citation import MatchCitation
 from trustrag.modules.citation.source_citation import SourceCitation
+from trustrag.modules.citation.llm_citation import LLMCitation
+lc=LLMCitation()
 mc = MatchCitation()
 sc = SourceCitation()
 citation_router = APIRouter()
@@ -37,7 +39,7 @@ async def citation(citation_body: CitationBody):
     try:
         show_summary=True
         if not show_summary:
-            citation_response = mc.ground_response(
+            citation_response = lc.ground_response(
                 question=question,
                 response=response,
                 evidences=evidences,

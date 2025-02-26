@@ -235,7 +235,7 @@ class MatchCitation:
 if __name__ == '__main__':
     mc = MatchCitation()
 
-    with open(f'{PROJECT_BASE}/data/docs/citations_samples/citation_match.json', 'r', encoding='utf-8') as f:
+    with open(f'{PROJECT_BASE}/modules/citation/citation_match.json', 'r', encoding='utf-8') as f:
         input_data = json.load(f)
     result = mc.ground_response(
         question=input_data["question"],
