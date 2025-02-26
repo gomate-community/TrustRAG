@@ -26,7 +26,9 @@ The core design of TrustRAG lies in its **high configurability and modularity**,
 **“Reliable input, Trusted output”**
 
 ## 🎉 Changelog
-- 2025.2.18 Supports OPenaAI DEMO
+
+- 2025.2.26 add llm_citation
+- 2025.2.18 Supports OpenAI DEMO
 - Supports vector database engines, such as Milvus and Qdrant.
 - Support for multimodal RAG question-answering, API using **GLM-4V-Flash**, code available at [trustrag/applications/rag_multimodal.py](trustrag/applications/rag_multimodal.py)
 - TrustRAG packaging and build, supporting both pip and source installation
