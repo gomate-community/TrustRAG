@@ -20,7 +20,7 @@ from trustrag.modules.retrieval.dense_retriever import DenseRetrieverConfig
 
 # 修改成自己的配置！！！
 app_config = ApplicationConfig()
-app_config.docs_path = "../data/docs"
+app_config.docs_path = "../../data/docs"
 app_config.llm_model_path = "gpt-4o"
 app_config.base_url = "https://api.openai-up.com/v1"
 app_config.api_key = "llm_api_key"
