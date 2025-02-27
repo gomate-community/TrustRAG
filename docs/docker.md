@@ -42,7 +42,30 @@ docker run -itd \
   --gpu-memory-utilization=0.9 \
   --tensor-parallel-size=1 \
   --swap-space=4 \
+  --enable-reasoning \
+  --reasoning-parser deepseek_r1 \
   --host 0.0.0.0 \
   --port 8000"
 ```
 
+### Docker参数说明：
+
+- `--gpus=all` - 允许容器访问主机上的所有GPU资源
+- `--name=llm_server` - 将容器命名为"llm_server"，便于后续管理
+- `-v /mnt/g/pretrained_models/llm/DeepSeek-R1-Distill-Qwen-1.5B:/workspace/DeepSeek-R1-Distill-Qwen-1.5B` - 将主机上的模型目录挂载到容器内的工作目录
+- `-p 8000:8000` - 将容器内的8000端口映射到主机的8000端口
+- `trustrag:0.1` - 使用名为"trustrag"，标签为"0.1"的Docker镜像
+
+### VLLM服务参数说明：
+
+- `CUDA_VISIBLE_DEVICES=0,1,2,3` - 指定使用的GPU设备编号
+- `--model /workspace/DeepSeek-R1-Distill-Qwen-1.5B` - 指定模型路径
+- `--served-model-name DeepSeek-R1-Distill-Qwen-1.5B` - 设置对外提供服务的模型名称
+- `--max-model-len=8192` - 设置模型的最大序列长度为8192
+- `--gpu-memory-utilization=0.9` - 设置GPU内存利用率为90%
+- `--tensor-parallel-size=1` - 设置模型并行度为1（使用1个GPU处理模型）
+- `--swap-space=4` - 设置交换空间大小为4GB
+- `--enable-reasoning` - 启用推理功能（注意：此参数重复了两次）
+- `--reasoning-parser deepseek_r1` - 指定使用deepseek_r1作为推理解析器
+- `--host 0.0.0.0` - 监听所有网络接口
+- `--port 8000` - 监听端口号为8000
