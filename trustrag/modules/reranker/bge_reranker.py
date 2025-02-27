@@ -26,11 +26,15 @@ class BgeRerankerConfig:
     Attributes:
         model_name_or_path (str): Path or model identifier for the pretrained model from Hugging Face's model hub.
         device (str): Device to load the model onto ('cuda' or 'cpu').
+        api_key (str): API key for the reranker service.
+        url (str): URL for the reranker service.
     """
 
-    def __init__(self, model_name_or_path='bert-base-uncased'):
+    def __init__(self, model_name_or_path='bert-base-uncased', api_key=None, url=None):
         self.model_name_or_path = model_name_or_path
         self.device = 'cuda' if torch.cuda.is_available() else 'cpu'
+        self.api_key = api_key
+        self.url = url
 
     def log_config(self):
         # Log the current configuration settings
@@ -38,6 +42,8 @@ class BgeRerankerConfig:
         BgeRerankerConfig:
             Model Name or Path: {self.model_name_or_path}
             Device: {self.device}
+            URL: {self.url}
+            API Key: {'*' * 8 if self.api_key else 'Not Set'}
         """
 
 

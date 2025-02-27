@@ -21,19 +21,29 @@ from trustrag.modules.reranker.bge_reranker import BgeRerankerConfig
 from trustrag.modules.retrieval.dense_retriever import DenseRetrieverConfig
 from datetime import datetime
 import pytz
+from trustrag.config.config_loader import config
 # ========================== Config Start====================
+# 加载配置
+llm_service = config.get_config('services.dmx')
+llm_model = config.get_config('models.llm')
+
 app_config = ApplicationConfig()
-app_config.docs_path = r"G:\Projects\TrustRAG\data\docs"
-app_config.base_url = "https://www.dmxapi.com/v1"
-app_config.api_key = "sk-gDbFoQAYz9pwqBsH0aPA1H8DN9s0B9F3vWNjjPcijRBFjk7f"
-app_config.model_name = "gpt-4o-all"
+app_config.docs_path = config.get_config('paths.docs')
+app_config.base_url = llm_service['base_url']
+app_config.api_key = llm_service['api_key']
+app_config.model_name = llm_model['name']
+
+# 加载嵌入模型配置
+embedding_service = config.get_config('services.dmx')
+embedding_model = config.get_config('models.embedding')
 
 retriever_config = DenseRetrieverConfig(
     dim=3072,
-    base_url="https://www.dmxapi.com/v1",
-    api_key= "sk-gDbFoQAYz9pwqBsH0aPA1H8DN9s0B9F3vWNjjPcijRBFjk7f",
-    embedding_model_name='text-embedding-3-large',
-    index_path=r'G:\Projects\TrustRAG\examples\retrievers\dense_cache'
+    index_path=config.get_config('paths.index'),
+    batch_size=32,
+    api_key=embedding_service['api_key'],
+    base_url=embedding_service['base_url'],
+    embedding_model_name=embedding_model['name']
 )
 # rerank_config = BgeRerankerConfig(
 #     model_name_or_path=r"H:\pretrained_models\mteb\bge-reranker-large"
@@ -527,8 +537,8 @@ with gr.Blocks(theme="soft") as demo:
                 with gr.Row():
                     message = gr.Textbox(label='Please enter a question')
                 with gr.Row():
-                    clear_history = gr.Button("🧹 Clear")
-                    send = gr.Button("🚀 Send")
+                    clear_history = gr.Button(" Clear")
+                    send = gr.Button(" Send")
                 with gr.Row():
                     gr.Markdown(
                         """>Remind：[TrustRAG Application](https://github.com/gomate-community/TrustRAG/issues)If you have any questions, please provide feedback in [Github Issue区](https://github.com/gomate-community/TrustRAG/issues) .""")
