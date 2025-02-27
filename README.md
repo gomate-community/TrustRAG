@@ -27,6 +27,7 @@ The core design of TrustRAG lies in its **high configurability and modularity**,
 
 ## 🎉 Changelog
 
+- 🔥2025.2.27 support docker llm server
 - 2025.2.26 add llm_citation
 - 2025.2.18 Supports OpenAI DEMO
 - Supports vector database engines, such as Milvus and Qdrant.
