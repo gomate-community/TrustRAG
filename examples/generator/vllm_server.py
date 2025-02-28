@@ -8,7 +8,7 @@ client = OpenAI(
 completion = client.chat.completions.create(
     model="DeepSeek-R1-Distill-Qwen-1.5B",
     messages=[
-        {"role": "user", "content": "请介绍下中科院计算所"}
+        {"role": "user", "content": "请介绍下中科院计算所<think>"}
     ]
 )
 
