@@ -8,11 +8,17 @@ client = OpenAI(
 completion = client.chat.completions.create(
     model="DeepSeek-R1-Distill-Qwen-1.5B",
     messages=[
-        {"role": "user", "content": "请介绍下中科院计算所<think>"}
-    ]
+        {"role": "user", "content": "请介绍下中科院计算所<think>\n"}
+    ],
+    temperature=0.7,       # 适中随机性
+    top_p=0.9,             # 控制生成词汇的分布
+    max_tokens=300,        # 限制输出长度
+    frequency_penalty=0.1, # 轻微降低重复词
+    presence_penalty=0.6   # 适当鼓励新内容
 )
 
 print(completion.choices[0].message)
+
 
 
 
