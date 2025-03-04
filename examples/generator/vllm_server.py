@@ -39,3 +39,5 @@ stream = client.chat.completions.create(
 for chunk in stream:
     if chunk.choices[0].delta.content is not None:
         print(chunk.choices[0].delta.content, end="")
+
+

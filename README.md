@@ -26,7 +26,7 @@ The core design of TrustRAG lies in its **high configurability and modularity**,
 **“Reliable input, Trusted output”**
 
 ## 🎉 Changelog
-
+- 🔥2025.3.4: Supports online search, adds the `websearch` engine, and supports `DuckDuck` and `Searx`.
 - 🔥2025.2.27 support docker llm server
 - 2025.2.26 add llm_citation
 - 2025.2.18 Supports OpenAI DEMO
