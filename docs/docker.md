@@ -28,6 +28,9 @@ docker rm -f test
 ```
 
 ## 启动vllm服务
+
+- 推理内容
+> 输出中包括content和reason_content两个字段
 ```bash
 docker run -itd \
   --gpus=all \
@@ -47,6 +50,30 @@ docker run -itd \
   --host 0.0.0.0 \
   --port 8000"
 ```
+
+- think标签
+
+>部署r1相关模型的时候，发现没有输出前半部分`<think>`标签，只输出了后半部分`</think>`，解决方案参考：https://github.com/deepseek-ai/DeepSeek-R1/issues/352
+
+```bash
+docker run -itd \
+  --gpus=all \
+  --name=llm_server \
+  -v /mnt/g/pretrained_models/llm/DeepSeek-R1-Distill-Qwen-1.5B:/workspace/DeepSeek-R1-Distill-Qwen-1.5B \
+  -p 8000:8000 \
+  trustrag:0.1 \
+  bash -c "CUDA_VISIBLE_DEVICES=0,1,2,3 python -m vllm.entrypoints.openai.api_server \
+  --model /workspace/DeepSeek-R1-Distill-Qwen-1.5B \
+  --served-model-name DeepSeek-R1-Distill-Qwen-1.5B \
+  --max-model-len=8192 \
+  --gpu-memory-utilization=0.9 \
+  --tensor-parallel-size=1 \
+  --swap-space=4 \
+  --host 0.0.0.0 \
+  --port 8000 \
+  --chat-template /mnt/g/pretrained_models/llm/DeepSeek-R1-Distill-Qwen-1.5B/template_deepseek_r1.jinja"
+```
+
 
 ### Docker参数说明：
 
