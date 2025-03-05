@@ -14,6 +14,34 @@ docker run --rm \
 	searxng/searxng
 ```
 
+>浏览器访问：http://localhost:8080/
+
+## 接口api
+
+可查看源码：[websearch.py](../trustrag/modules/engine/websearch.py)
+
+具体使用方式：
+
+```python
+
+from trustrag.modules.engine.websearch import SearxngEngine, DuckduckEngine
+
+if __name__ == "__main__":
+    search_engine = SearxngEngine()
+    # Create an instance of SearxngEngine
+    searxng = SearxngEngine()
+
+    # Perform a search
+    search_results = searxng.search(
+        "医疗的梅奥 默沙东",
+        language="zh-CN",
+        top_k=5
+    )
+
+    # Print results
+    for result in search_results:
+        print(result)
+```
 
 ## 403错误设置
 ```text
