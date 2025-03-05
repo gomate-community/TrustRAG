@@ -1,6 +1,9 @@
 from typing import List, Dict, Optional
 from duckduckgo_search import DDGS
 
+from typing import List, Dict, Optional
+import requests
+
 
 class DuckduckEngine:
     def __init__(self, proxy: Optional[str] = None, timeout: int = 20) -> None:
@@ -37,9 +40,6 @@ class DuckduckEngine:
             print(f"URL: {result['href']}")
             print(f"Body: {result['body']}\n")
 
-
-from typing import List, Dict, Optional
-import requests
 
 
 class SearxngEngine:
