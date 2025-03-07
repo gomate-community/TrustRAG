@@ -28,6 +28,7 @@ TrustRAG框架的设计核心在于其**高度的可配置性和模块化**，�
 可靠的输入，可信的输出
 
 ## 🎉 更新记录
+- 📑 **2025.3.8** 支持Deep Search，完成慢思考以及生成研究报告
 - 🌐 **2025.3.4** 支持联网搜索，添加 `websearch` 引擎，支持 **DuckDuck** 以及 **Searxn**
 - 🐳 **2025.2.27** 添加 `Dockerfile`，支持 `Docker` 部署
 - 🔍 **2025.2.26** 添加 **大模型引用生成**
@@ -327,6 +328,7 @@ app后台日志：
 >本项目感谢以下开源项目的支持与贡献：
 - 文档解析：[infiniflow/ragflow](https://github.com/infiniflow/ragflow/blob/main/deepdoc/README.md)
 - PDF文件解析：[opendatalab/MinerU](https://github.com/opendatalab/MinerU)
+- 深度搜索：[deep-research](https://github.com/dzhng/deep-research)|[deep-research-py](https://github.com/epuerta9/deep-research-py)
 
 ## 👉 Citation
 ```text
