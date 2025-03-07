@@ -25,20 +25,21 @@ The core design of TrustRAG lies in its **high configurability and modularity**,
 
 **“Reliable input, Trusted output”**
 
-## 🎉 Changelog
-- 🔥2025.3.4: Supports online search, adds the `websearch` engine, and supports `DuckDuck` and `Searx`.
-- 🔥2025.2.27 support docker llm server
-- 2025.2.26 add llm_citation
-- 2025.2.18 Supports OpenAI DEMO
-- Supports vector database engines, such as Milvus and Qdrant.
-- Support for multimodal RAG question-answering, API using **GLM-4V-Flash**, code available at [trustrag/applications/rag_multimodal.py](trustrag/applications/rag_multimodal.py)
-- TrustRAG packaging and build, supporting both pip and source installation
-- Added [MinerU document parsing](https://github.com/gomate-community/TrustRAG/blob/main/docs/mineru.md): A one-stop open-source high-quality data extraction tool, supporting PDF/webpage/multi-format e-book extraction `[20240907]`
-- RAPTOR: Recursive tree retriever implementation
-- Support for multiple file parsing and modularity, currently supported file types include: `text`, `docx`, `ppt`, `excel`, `html`, `pdf`, `md`, etc.
-- Optimized `DenseRetriever`, supporting index building, incremental appending, and index saving, including saving documents, vectors, and indexes
-- Added `ReRank` with BGE sorting, Rewriter with `HyDE`
-- Added `Judge` with BgeJudge, determining the usefulness of articles `20240711`
+## 🎉 Update Log
+- 🌐 **2025.3.4** Added `websearch` engine for online searches, supporting **DuckDuck** and **Searxn**
+- 🐳 **2025.2.27** Added `Dockerfile`, enabling `Docker` deployment
+- 🔍 **2025.2.26** Implemented **large model citation generation**
+- 🤖 **2025.2.18** Full integration of `OpenAI` applications, see details in [app.py](app.py)
+- 🏆 **2025.1.20** Added support for **vector database engines**, such as `Milvus` and `Qdrant`
+- 🖼️ **Multimodal RAG-based Q&A** using **GLM-4V-Flash**, code available at [trustrag/applications/rag_multimodal.py](trustrag/applications/rag_multimodal.py)
+- 📦 **TrustRAG packaging and deployment**, supports both `pip` and `source` installations
+- 📑 **Added [MinerU Document Parsing](https://github.com/gomate-community/TrustRAG/blob/main/docs/mineru.md)**  
+  ➡️ An open-source, high-quality data extraction tool supporting `PDFs`, `web pages`, and `multi-format e-books` **[2024.09.07]**
+- 🌲 **Implemented RAPTOR: Recursive Tree Retriever**
+- 📂 **Supports modularized parsing of multiple file formats**, including `text`, `docx`, `ppt`, `excel`, `html`, `pdf`, and `md`
+- ⚡ **Optimized `DenseRetriever`**, supporting index construction, incremental additions, and index storage, including documents, vectors, and indexes
+- 🎯 **Added `ReRank` with `BGE` sorting and `Rewriter` with `HyDE`**
+- 🏛️ **Introduced `Judge` module with `BgeJudge`** to assess article relevance **[2024.07.11]**
 
 ## 🚀Quick Start
 
