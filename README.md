@@ -26,6 +26,7 @@ The core design of TrustRAG lies in its **high configurability and modularity**,
 **“Reliable input, Trusted output”**
 
 ## 🎉 Update Log
+- 📑 **2025.3.8** Supports **Deep Search**, enables slow thinking, and generates research reports.
 - 🌐 **2025.3.4** Added `websearch` engine for online searches, supporting **DuckDuck** and **Searxn**
 - 🐳 **2025.2.27** Added `Dockerfile`, enabling `Docker` deployment
 - 🔍 **2025.2.26** Implemented **large model citation generation**
