@@ -46,7 +46,7 @@ TrustRAG框架的设计核心在于其**高度的可配置性和模块化**，�
 
 ## TODO
 - [ ] 支持yaml格式配置文件
-- [ ] 优化prompt模块
+- [x] 优化prompt模块
 - [ ] 实现DeepSearch功能
 
 ## 🚀快速上手
