@@ -57,7 +57,8 @@ class EnvironmentConfig:
         ServiceProvider.OPENAI.value: ProviderConfig(
             service_provider_name=ServiceProvider.OPENAI.value,
             api_key_env="OPENAI_API_KEY",
-            default_url="https://api.openai.com/v1",
+            # default_url="https://api.openai.com/v1",
+            default_url="https://www.dmxapi.com/v1",
             url_env_var="OPENAI_API_ENDPOINT",
             default_model=DEFAULT_OPENAI_MODEL,
             model_env_var="OPENAI_MODEL",

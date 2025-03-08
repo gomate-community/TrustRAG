@@ -67,5 +67,5 @@ qdrant-client[fastembed]
 pymilvus
 chromadb
 langdetect
-playwright
 firecrawl
+playwright

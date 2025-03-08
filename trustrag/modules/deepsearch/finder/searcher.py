@@ -36,7 +36,7 @@ class DeepSearchEngine:
 
     def __init__(
             self,
-            engine_type: str = "searxng",
+            engine_type: str = "duckduckgo",
             proxy: Optional[str] = None,
             timeout: int = 20,
             searxng_url: str = os.getenv("SEARXNG_URL")
@@ -142,7 +142,7 @@ if __name__ == '__main__':
     results = searx_search.search(
         "机器学习教程",
         top_k=3,
-        language="en-US",
+        language="zh-CN",
         categories="general"
     )
     print(results)
