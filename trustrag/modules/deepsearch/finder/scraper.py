@@ -1,6 +1,7 @@
 from dataclasses import dataclass
 from typing import Dict, Any
-from trustrag.modules.deepsearch.utils import logger
+# from trustrag.modules.deepsearch.utils import logger
+import loguru
 from abc import ABC, abstractmethod
 from playwright.async_api import async_playwright
 
@@ -58,7 +59,7 @@ class PlaywrightScraper:
         self.browser = await browser_method.launch(headless=self.headless)
         self.context = await self.browser.new_context()
 
-        logger.info(
+        loguru.logger.info(
             f"Playwright {self.browser_type} browser initialized in {'headless' if self.headless else 'headed'} mode"
         )
 
@@ -68,7 +69,7 @@ class PlaywrightScraper:
             await self.browser.close()
         if hasattr(self, "playwright") and self.playwright:
             await self.playwright.stop()
-        logger.info("Playwright resources cleaned up")
+        loguru.logger.info("Playwright resources cleaned up")
 
     async def scrape(self, url: str, **kwargs) -> ScrapedContent:
         """Scrape a URL using Playwright and return standardized content."""
@@ -83,6 +84,7 @@ class PlaywrightScraper:
             page.set_default_timeout(timeout)
 
             # Navigate to URL
+            loguru.logger.info("Navigate to URL:"+url)
             response = await page.goto(url, wait_until="networkidle")
             status_code = response.status if response else 0
 
@@ -112,7 +114,7 @@ class PlaywrightScraper:
             )
 
         except Exception as e:
-            logger.error(f"Error scraping {url}: {str(e)}")
+            loguru.logger.error(f"Error scraping {url}: {str(e)}")
             return ScrapedContent(
                 url=url, html="", text="", status_code=0, metadata={"error": str(e)}
             )
