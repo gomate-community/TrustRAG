@@ -1,11 +1,10 @@
 from dataclasses import dataclass
 from typing import Dict, Any
-# from trustrag.modules.deepsearch.utils import logger
 import loguru
 from abc import ABC, abstractmethod
 from playwright.async_api import async_playwright
-
-# ---- Data Models ----
+import asyncio
+import re
 
 
 @dataclass
@@ -17,9 +16,6 @@ class ScrapedContent:
     text: str
     status_code: int
     metadata: Dict[str, Any] = None
-
-
-# ---- Scraper Interfaces ----
 
 
 class Scraper(ABC):
@@ -73,6 +69,7 @@ class PlaywrightScraper:
 
     async def scrape(self, url: str, **kwargs) -> ScrapedContent:
         """Scrape a URL using Playwright and return standardized content."""
+        loguru.logger.info(f"{url} scraped")
         if not self.browser:
             await self.setup()
 
@@ -118,3 +115,87 @@ class PlaywrightScraper:
             return ScrapedContent(
                 url=url, html="", text="", status_code=0, metadata={"error": str(e)}
             )
+
+
+def clean_scraped_text(text):
+    """
+    清理爬取的文本内容，移除HTML/CSS代码片段
+
+    参数:
+        text (str): 原始爬取的文本内容
+
+    返回:
+        str: 清理后的文本内容
+    """
+    # 移除CSS样式定义
+    text = re.sub(r'[a-zA-Z#\.\-\_\s,:]+ \{[^\}]*\}', '', text)
+
+    # 移除HTML标签
+    text = re.sub(r'<[^>]*>', '', text)
+
+    # 移除URL引用
+    text = re.sub(r'url\([^\)]*\)', '', text)
+
+    # 移除background-image等样式属性
+    text = re.sub(r'background-[a-z\-]+:[^;]*;', '', text)
+
+    # 移除width, height等样式属性
+    text = re.sub(r'(width|height|display|float|vertical-align):[^;]*;', '', text)
+
+    # 移除只包含空白字符的行
+    text = re.sub(r'^\s*$', '', text, flags=re.MULTILINE)
+
+    # 移除连续的多个空行，保留单个空行
+    text = re.sub(r'\n\s*\n', '\n\n', text)
+
+    return text.strip()
+
+
+async def main():
+    # 配置日志
+    loguru.logger.add("scraper.log", rotation="10 MB")
+
+    # 创建爬虫实例，headless=True表示无界面模式
+    scraper = PlaywrightScraper(headless=True)
+
+    try:
+        # 要爬取的网址
+        target_url = "https://blog.sciencenet.cn/blog-2089193-1469701.html"
+        target_url = "https://blog.csdn.net/2401_85375151/article/details/144805338"
+        target_url = "https://zhuanlan.zhihu.com/p/19647641182"
+        # 爬取内容
+        result = await scraper.scrape(target_url)
+
+        # 清理文本内容
+        cleaned_text = clean_scraped_text(result.text)
+
+        # 打印爬取结果
+        print(f"URL: {result.url}")
+        print(f"状态码: {result.status_code}")
+        print(f"标题: {result.metadata.get('title', 'N/A')}")
+        print("\n-----清理后的文本内容预览(前500字)-----")
+        print(cleaned_text[:500] + "...")
+
+        # 保存完整HTML到文件
+        with open("sciencenet_blog.html", "w", encoding="utf-8") as f:
+            f.write(result.html)
+
+        # 保存原始提取的文本到文件
+        with open("sciencenet_blog_raw.txt", "w", encoding="utf-8") as f:
+            f.write(result.text)
+
+        # 保存清理后的文本到文件
+        with open("sciencenet_blog_cleaned.txt", "w", encoding="utf-8") as f:
+            f.write(cleaned_text)
+
+        print("\n爬取内容已保存到文件，包括原始HTML、原始文本和清理后的文本")
+
+    except Exception as e:
+        loguru.logger.error(f"爬虫运行出错: {str(e)}")
+    finally:
+        # 清理资源
+        await scraper.teardown()
+
+# 运行主函数
+if __name__ == "__main__":
+    asyncio.run(main())

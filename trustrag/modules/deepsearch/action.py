@@ -35,12 +35,11 @@ async def generate_serp_queries(
 ) -> List[SerpQuery]:
     """Generate SERP queries based on user input and previous learnings."""
 
-    # prompt = f"""Given the following prompt from the user, generate a list of SERP queries to research the topic. Return a JSON object with a 'queries' array field containing {num_queries} queries (or less if the original prompt is clear). Each query object should have 'query' and 'research_goal' fields. Make sure each query is unique and not similar to each other: <prompt>{query}</prompt>"""
-    prompt  = f"""根据用户提供的以下提示，生成SERP（Search Engine Results Page ，搜索引擎结果页面）查询列表以研究该主题。
-    返回一个JSON对象，其中包含'queries'数组字段，该字段包含{num_queries}个查询（如果原始提示已经很明确，则可以少于此数量）。
-    每个查询对象应有'query'和'research_goal'字段。
-    确保每个查询都是唯一的，层层递进的，彼此之间不要相似。
-    请注意JSON对象一定要格式正确，不要输出其他额外内容。"""
+    prompt = f"""根据用户的以下提示，生成一系列SERP查询来研究该主题。
+    返回一个JSON对象，其中包含一个'queries'数组字段，包含{num_queries}个查询（如果原始提示已经很明确，则可以少于这个数量）。
+    每个查询对象应该有'query'和'research_goal'字段。
+    请注意JSON对象一定要格式正确，不要输出其他额外内容。
+    确保每个查询都是唯一的，且彼此不相似：主题<prompt>{query}</prompt>"""
     if learnings:
         # prompt += f"\n\nHere are some learnings from previous research, use them to generate more specific queries: {' '.join(learnings)}"
         prompt += f"\n\n这里是之前研究步骤的一些发现，请使用它们生成更具体的查询：{' '.join(learnings)}。请确保生成的查询与用户原始提示的语言保持一致。"
@@ -54,8 +53,6 @@ async def generate_serp_queries(
         ],
         response_format={"type": "json_object"},
     )
-    loguru.logger.info("generate_serp_queries done:")
-    loguru.logger.info(response)
     try:
         queries = response.get("queries", [])
         return [SerpQuery(**q) for q in queries][:num_queries]
@@ -83,15 +80,6 @@ async def process_serp_result(
 
     # Create the contents string separately
     contents_str = "".join(f"<content>\n{content}\n</content>" for content in contents)
-
-    # prompt = (
-    #     f"Given the following contents from a SERP search for the query <query>{query}</query>, "
-    #     f"generate a list of learnings from the contents. Return a JSON object with 'learnings' "
-    #     f"and 'followUpQuestions' keys with array of strings as values. Include up to {num_learnings} learnings and "
-    #     f"{num_follow_up_questions} follow-up questions. The learnings should be unique, "
-    #     "concise, and information-dense, including entities, metrics, numbers, and dates.\n\n"
-    #     f"<contents>{contents_str}</contents>"
-    # )
 
     prompt = (
         f"根据以下对查询<query>{query}</query>的SERP搜索内容，"
@@ -139,19 +127,11 @@ async def write_final_report(
         150_000,
     )
 
-    # user_prompt = (
-    #     f"Given the following prompt from the user, write a final report on the topic using "
-    #     f"the learnings from research. Return a JSON object with a 'reportMarkdown' field "
-    #     f"containing a detailed markdown report (aim for 3+ pages). Include ALL the learnings "
-    #     f"from research:\n\n<prompt>{prompt}</prompt>\n\n"
-    #     f"Here are all the learnings from research:\n\n<learnings>\n{learnings_string}\n</learnings>"
-    # )
     user_prompt = (
         f"根据以下用户提供的提示，使用研究中获得的学习要点撰写关于该主题的最终报告。返回一个JSON对象，"
-        f"其中包含'reportMarkdown'字段，该字段包含详细的markdown报告（目标为3+页）。包括研究中的所有学习要点：\n\n"
+        f"其中包含'reportMarkdown'字段，该字段包含详细的markdown报告（目标为3页以上），尽量内容丰富饱满。包括研究中的所有学习要点：\n\n"
         f"<prompt>{prompt}</prompt>\n\n"
         f"以下是研究中获得的所有学习要点：\n\n<learnings>\n{learnings_string}\n</learnings>"
-        f"请确保生成的报告与用户原始提示({prompt})的语言保持一致。"
     )
     response = await get_client_response(
         client=client,
@@ -167,7 +147,7 @@ async def write_final_report(
         report = response.get("reportMarkdown", "")
 
         # Append sources
-        urls_section = "\n\n## Sources\n\n" + "\n".join(
+        urls_section = "\n\n## 来源\n\n" + "\n".join(
             [f"- {url}" for url in visited_urls]
         )
         return report + urls_section
@@ -216,7 +196,7 @@ async def deep_research(
         async with semaphore:
             try:
                 # Search for content
-                result = await search_service.search(serp_query.query, limit=5)
+                result = await search_service.search(serp_query.query, limit=2)
                 loguru.logger.info("process_query:")
                 loguru.logger.info(result)
                 # Collect new URLs
