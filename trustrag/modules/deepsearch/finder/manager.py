@@ -1,7 +1,8 @@
 import asyncio
 from typing import List, Dict, Union
-from trustrag.modules.deepsearch.utils import logger
-from trustrag.modules.deepsearch.finder.searcher import SearchResult, SearchEngine, DdgsSearchEngine
+# from trustrag.modules.deepsearch.utils import logger
+import loguru
+from trustrag.modules.deepsearch.finder.searcher import SearchResult, SearchEngine, DeepSearchEngine
 from trustrag.modules.deepsearch.finder.scraper import ScrapedContent, Scraper, PlaywrightScraper
 
 
@@ -9,7 +10,7 @@ class SearchAndScrapeManager:
     """Main class for coordinating search and scrape operations."""
 
     def __init__(self, search_engine: SearchEngine = None, scraper: Scraper = None):
-        self.search_engine = search_engine or DdgsSearchEngine()
+        self.search_engine = search_engine or DeepSearchEngine()
         self.scraper = scraper or PlaywrightScraper()
 
     async def setup(self):
@@ -26,7 +27,7 @@ class SearchAndScrapeManager:
         self, query: str, num_results: int = 10, **kwargs
     ) -> List[SearchResult]:
         """Perform a search using the configured search engine."""
-        return await self.search_engine.search(query, num_results, **kwargs)
+        return await self.search_engine.search_async(query, num_results, **kwargs)
 
     async def scrape(self, url: str, **kwargs) -> ScrapedContent:
         """Scrape a URL using the configured scraper."""
@@ -64,6 +65,7 @@ class SearchAndScrapeManager:
             semaphore = asyncio.Semaphore(max_concurrent_scrapes)
 
             async def scrape_with_semaphore(url):
+                loguru.logger.info("Scraping %s", url)
                 async with semaphore:
                     return await self.scrape(url, **kwargs)
 
@@ -80,7 +82,7 @@ class SearchAndScrapeManager:
             # Process results
             for i, result in enumerate(scraped_results):
                 if isinstance(result, Exception):
-                    logger.error(f"Error scraping result {i+1}: {str(result)}")
+                    loguru.logger.error(f"Error scraping result {i+1}: {str(result)}")
                     continue
 
                 scraped_contents[search_results[i].url] = result

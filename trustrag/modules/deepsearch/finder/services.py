@@ -2,7 +2,8 @@ from enum import Enum
 from typing import Dict, Optional, Any, List, TypedDict
 import os
 import asyncio
-from trustrag.modules.deepsearch.utils import logger
+# from trustrag.modules.deepsearch.utils import logger
+import loguru
 from firecrawl import FirecrawlApp
 from trustrag.modules.deepsearch.finder.manager import SearchAndScrapeManager
 
@@ -96,7 +97,7 @@ class SearchService:
                 return {"data": formatted_data}
 
         except Exception as e:
-            logger.error(f"Error during search: {str(e)}")
+            loguru.logger.error(f"Error during search: {str(e)}")
             return {"data": []}
 
 

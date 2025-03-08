@@ -1,9 +1,41 @@
 import os
 import sys
-sys.path.append("/Users/yanqiang/Projects/TrustRAG")
-# 设置环境变量
-os.environ['HTTP_PROXY'] = 'http://127.0.0.1:7890'
-os.environ['HTTPS_PROXY'] = 'http://127.0.0.1:7890'
+
+
+# Automatically find the TrustRAG root directory
+def find_trustrag_directory():
+    # Get the absolute path of the current file
+    current_file = os.path.abspath(__file__)
+    current_dir = os.path.dirname(current_file)
+
+    # Start from current directory and walk up until we find TrustRAG directory
+    test_dir = current_dir
+    while test_dir and os.path.dirname(test_dir) != test_dir:  # Stop at filesystem root
+        # Check if this directory is named TrustRAG
+        if os.path.basename(test_dir) == "TrustRAG":
+            return test_dir
+
+        # Check if TrustRAG is a direct subdirectory
+        potential_trustrag = os.path.join(test_dir, "TrustRAG")
+        if os.path.exists(potential_trustrag) and os.path.isdir(potential_trustrag):
+            return potential_trustrag
+
+        # Move up one directory
+        test_dir = os.path.dirname(test_dir)
+
+    # If nothing is found, return None
+    return None
+
+
+# Find and add TrustRAG to path
+trustrag_dir = find_trustrag_directory()
+print(trustrag_dir)
+if trustrag_dir:
+    sys.path.append(trustrag_dir)
+    print(f"Added TrustRAG directory to path: {trustrag_dir}")
+else:
+    print("Warning: Could not locate TrustRAG directory automatically.")
+
 
 import asyncio
 import typer
