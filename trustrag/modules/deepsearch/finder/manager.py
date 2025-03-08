@@ -2,7 +2,7 @@ import asyncio
 from typing import List, Dict, Union
 # from trustrag.modules.deepsearch.utils import logger
 import loguru
-from trustrag.modules.deepsearch.finder.searcher import SearchResult, SearchEngine, DeepSearchEngine
+from trustrag.modules.deepsearch.finder.searcher import SearchResult, SearchEngine, UnifiedSearchEngine
 from trustrag.modules.deepsearch.finder.scraper import ScrapedContent, Scraper, PlaywrightScraper
 
 
@@ -10,7 +10,7 @@ class SearchAndScrapeManager:
     """Main class for coordinating search and scrape operations."""
 
     def __init__(self, search_engine: SearchEngine = None, scraper: Scraper = None):
-        self.search_engine = search_engine or DeepSearchEngine()
+        self.search_engine = search_engine or UnifiedSearchEngine()
         self.scraper = scraper or PlaywrightScraper()
 
     async def setup(self):
@@ -24,7 +24,7 @@ class SearchAndScrapeManager:
             await self.scraper.teardown()
 
     async def search(
-        self, query: str, num_results: int = 10, **kwargs
+        self, query: str, num_results: int = 5, **kwargs
     ) -> List[SearchResult]:
         """Perform a search using the configured search engine."""
         return await self.search_engine.search_async(query, num_results, **kwargs)
@@ -36,7 +36,7 @@ class SearchAndScrapeManager:
     async def search_and_scrape(
         self,
         query: str,
-        num_results: int = 10,
+        num_results: int = 5,
         scrape_all: bool = False,
         max_concurrent_scrapes: int = 5,
         **kwargs,
@@ -65,7 +65,7 @@ class SearchAndScrapeManager:
             semaphore = asyncio.Semaphore(max_concurrent_scrapes)
 
             async def scrape_with_semaphore(url):
-                loguru.logger.info("Scraping %s", url)
+                loguru.logger.info("Scraping %s"+url)
                 async with semaphore:
                     return await self.scrape(url, **kwargs)
 

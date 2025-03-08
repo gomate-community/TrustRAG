@@ -107,30 +107,24 @@ async def main(
     depth = int((await async_prompt(depth_prompt)) or "2")
     console.print()
 
-    # First show progress for research plan
-    console.print("\n[yellow]创建研究计划的链路...[/yellow]")
-    follow_up_questions = await generate_feedback(query, client, model)
+    # # First show progress for research plan
+    # console.print("\n[yellow]创建研究计划的链路...[/yellow]")
+    # follow_up_questions = await generate_feedback(query, client, model)
+    #
+    # # Then collect answers separately from progress display
+    # console.print("\n[bold yellow]Follow-up Questions:[/bold yellow]")
+    # answers = []
+    # for i, question in enumerate(follow_up_questions, 1):
+    #     console.print(f"\n[bold blue]Q{i}:[/bold blue] {question}")
+    #     answer = await async_prompt("➤ Your answer: ")
+    #     answers.append(answer)
+    #     console.print()
 
-    # Then collect answers separately from progress display
-    console.print("\n[bold yellow]Follow-up Questions:[/bold yellow]")
-    answers = []
-    for i, question in enumerate(follow_up_questions, 1):
-        console.print(f"\n[bold blue]Q{i}:[/bold blue] {question}")
-        answer = await async_prompt("➤ Your answer: ")
-        answers.append(answer)
-        console.print()
-
-    # Combine information
     # combined_query = f"""
-    # Initial Query: {query}
-    # Follow-up Questions and Answers:
+    # 初始查询：{query}
+    # 后续问题和答案：
     # {chr(10).join(f"Q: {q} A: {a}" for q, a in zip(follow_up_questions, answers))}
     # """
-    combined_query = f"""
-    初始查询：{query}
-    后续问题和答案：
-    {chr(10).join(f"Q: {q} A: {a}" for q, a in zip(follow_up_questions, answers))}
-    """
 
     # Now use Progress for the research phase
     with Progress(
@@ -140,10 +134,10 @@ async def main(
     ) as progress:
         # Do research
         task = progress.add_task(
-            "[yellow]Researching your topic...[/yellow]", total=None
+            "[yellow]正在探究你的主题...[/yellow]", total=None
         )
         research_results = await deep_research(
-            query=combined_query,
+            query=query,
             breadth=breadth,
             depth=depth,
             concurrency=concurrency,
@@ -160,7 +154,8 @@ async def main(
         # Generate report
         task = progress.add_task("Writing final report...", total=None)
         report = await write_final_report(
-            prompt=combined_query,
+            # prompt=combined_query,
+            prompt=query,
             learnings=research_results["learnings"],
             visited_urls=research_results["visited_urls"],
             client=client,
@@ -179,10 +174,10 @@ async def main(
             rprint(f"• {url}")
 
         # Save report
+        console.print("\n[dim]Report  been saved to output.md[/dim]")
+
         with open("output.md", "w",encoding="utf-8") as f:
             f.write(report)
-        console.print("\n[dim]Report has been saved to output.md[/dim]")
-
 
 def run():
     """Synchronous entry point for the CLI tool."""

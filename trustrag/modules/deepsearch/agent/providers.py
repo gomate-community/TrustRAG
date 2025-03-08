@@ -1,4 +1,6 @@
 import os
+
+import loguru
 import typer
 import json
 from openai import AsyncOpenAI
@@ -58,11 +60,13 @@ class AIClientFactory:
 async def get_client_response(
     client: AsyncOpenAI, model: str, messages: list, response_format: dict
 ):
+    # loguru.logger.info(messages)
     response = await client.beta.chat.completions.parse(
         model=model,
         messages=messages,
         response_format=response_format,
     )
+    # loguru.logger.info(response)
 
     result = response.choices[0].message.content
 

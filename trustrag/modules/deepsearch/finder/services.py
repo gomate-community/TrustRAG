@@ -1,10 +1,12 @@
+import asyncio
+import os
 from enum import Enum
 from typing import Dict, Optional, Any, List, TypedDict
-import os
-import asyncio
+
 # from trustrag.modules.deepsearch.utils import logger
 import loguru
 from firecrawl import FirecrawlApp
+
 from trustrag.modules.deepsearch.finder.manager import SearchAndScrapeManager
 
 
@@ -33,6 +35,7 @@ class SearchService:
             service_type = os.environ.get("DEFAULT_SCRAPER", "playwright_ddgs")
 
         self.service_type = service_type
+        loguru.logger.info(self.service_type)
 
         # Initialize the appropriate service
         if service_type == SearchServiceType.FIRECRAWL.value:
@@ -65,7 +68,6 @@ class SearchService:
         Returns data in a format compatible with the Firecrawl response format.
         """
         await self.ensure_initialized()
-
         try:
             if self.service_type == SearchServiceType.FIRECRAWL.value:
                 return await self.firecrawl.search(query, limit=limit, **kwargs)
@@ -73,10 +75,11 @@ class SearchService:
                 search_results = await self.manager.search(
                     query, num_results=limit, **kwargs
                 )
-
+                # loguru.logger.info(search_results)
                 scraped_data = await self.manager.search_and_scrape(
                     query, num_results=limit, scrape_all=True, **kwargs
                 )
+                # loguru.logger.info(scraped_data)
 
                 # Format the response to match Firecrawl format
                 formatted_data = []
@@ -84,18 +87,17 @@ class SearchService:
                     item = {
                         "url": result.url,
                         "title": result.title,
-                        "content": "",  # Default empty content
+                        "content": result.description,  # Default empty content
                     }
 
                     # Add content if we scraped it
                     if result.url in scraped_data["scraped_contents"]:
                         scraped = scraped_data["scraped_contents"][result.url]
-                        item["content"] = scraped.text
+                        item["content"] = item["content"]+scraped.text
 
                     formatted_data.append(item)
 
                 return {"data": formatted_data}
-
         except Exception as e:
             loguru.logger.error(f"Error during search: {str(e)}")
             return {"data": []}
@@ -108,7 +110,7 @@ class Firecrawl:
         self.app = FirecrawlApp(api_key=api_key, api_url=api_url)
 
     async def search(
-        self, query: str, timeout: int = 15000, limit: int = 5
+            self, query: str, timeout: int = 15000, limit: int = 5
     ) -> SearchResponse:
         """Search using Firecrawl SDK in a thread pool to keep it async."""
         try:
@@ -139,9 +141,9 @@ class Firecrawl:
                             {
                                 "url": getattr(item, "url", ""),
                                 "content": getattr(item, "markdown", "")
-                                or getattr(item, "content", ""),
+                                           or getattr(item, "content", ""),
                                 "title": getattr(item, "title", "")
-                                or getattr(item, "metadata", {}).get("title", ""),
+                                         or getattr(item, "metadata", {}).get("title", ""),
                             }
                         )
                 return {"data": formatted_data}
@@ -157,7 +159,16 @@ class Firecrawl:
             return {"data": []}
 
 
+
+
 # Initialize a global instance with the default settings
 search_service = SearchService(
     service_type=os.getenv("DEFAULT_SCRAPER", "playwright_ddgs")
 )
+async def search_example():
+
+    results = await search_service.search("大模型强化学习技术", limit=1)
+    print(results)
+if __name__ == '__main__':
+    import asyncio
+    asyncio.run(search_example())

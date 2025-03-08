@@ -3,6 +3,9 @@ from abc import ABC, abstractmethod
 from dataclasses import dataclass
 from typing import List, Dict, Optional, Any
 import os
+
+import loguru
+
 from trustrag.modules.engine.websearch import DuckduckEngine, SearxngEngine
 
 
@@ -28,7 +31,7 @@ class SearchEngine(ABC):
         pass
 
 
-class DeepSearchEngine:
+class UnifiedSearchEngine:
     """
     A unified search engine that can use either DuckduckEngine or SearxngEngine
     based on the engine_type parameter.
@@ -36,10 +39,10 @@ class DeepSearchEngine:
 
     def __init__(
             self,
-            engine_type: str = "duckduckgo",
+            engine_type: str = "searxng",
             proxy: Optional[str] = None,
             timeout: int = 20,
-            searxng_url: str = os.getenv("SEARXNG_URL")
+            searxng_url: str = os.getenv("SEARXNG_URL","http://localhost:8080/search")
     ) -> None:
         """
         Initialize the UnifiedSearchEngine class.
@@ -49,6 +52,7 @@ class DeepSearchEngine:
         :param timeout: Request timeout in seconds
         :param searxng_url: URL of the SearxNG instance if using searxng
         """
+        loguru.logger.info(searxng_url)
         self.engine_type = engine_type.lower()
 
         if self.engine_type == "duckduckgo":
@@ -135,18 +139,18 @@ if __name__ == '__main__':
     # duck_search.print_results(results)
 
     # 使用SearxNG引擎
-    searx_search = DeepSearchEngine(
+    searx_search = UnifiedSearchEngine(
         engine_type="searxng",
         searxng_url="http://localhost:8080/search"
     )
     results = searx_search.search(
-        "机器学习教程",
+        "大模型强化学习技术",
         top_k=3,
         language="zh-CN",
         categories="general"
     )
     print(results)
-    # searx_search.print_results(results)
+    searx_search.print_results(results)
 
     # async def search_example():
     #     engine = DeepSearchEngine()
