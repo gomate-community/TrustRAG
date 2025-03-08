@@ -18,7 +18,10 @@ async def generate_feedback(query: str, client: openai.OpenAI, model: str) -> Li
             {
                 "role": "user",
                 # "content": f"Given this research topic: {query}, generate 3-5 follow-up questions to better understand the user's research needs. Return the response as a JSON object with a 'questions' array field.",
-                "content": f"根据这个研究主题：{query}，生成3-5个后续问题以更好地理解用户的研究需求。请以JSON对象形式返回响应，其中包含'questions'数组字段。请确保生成的问题与用户查询({query})的语言保持一致。",
+                "content": f"根据这个研究主题：{query}，生成3-5个可以更好地理解用户的研究需求的后续问题。"
+                           f"请以JSON对象形式返回响应，其中包含'questions'数组字段。"
+                           f"注意JSON对象格式一定要正确，不要输出额外内容。"
+                           f"请确保生成的问题与用户查询({query})的语言保持一致。",
             },
         ],
         response_format={"type": "json_object"},

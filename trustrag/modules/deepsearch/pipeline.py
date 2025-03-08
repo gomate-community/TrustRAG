@@ -96,19 +96,19 @@ async def main(
     model = AIClientFactory.get_model()
 
     # Get initial inputs with clear formatting
-    query = await async_prompt("\n🔍 What would you like to research? ")
+    query = await async_prompt("\n🔍 你想研究什么？")
     console.print()
 
-    breadth_prompt = "📊 Research breadth (recommended 2-10) [4]: "
+    breadth_prompt = "📊 研究广度,查询扩展的个数（建议2-10）[4]："
     breadth = int((await async_prompt(breadth_prompt)) or "4")
     console.print()
 
-    depth_prompt = "🔍 Research depth (recommended 1-5) [2]: "
+    depth_prompt = "🔍研究深度，递归检索的深度（建议1-5）[2]："
     depth = int((await async_prompt(depth_prompt)) or "2")
     console.print()
 
     # First show progress for research plan
-    console.print("\n[yellow]Creating research plan...[/yellow]")
+    console.print("\n[yellow]创建研究计划的链路...[/yellow]")
     follow_up_questions = await generate_feedback(query, client, model)
 
     # Then collect answers separately from progress display
@@ -121,9 +121,14 @@ async def main(
         console.print()
 
     # Combine information
+    # combined_query = f"""
+    # Initial Query: {query}
+    # Follow-up Questions and Answers:
+    # {chr(10).join(f"Q: {q} A: {a}" for q, a in zip(follow_up_questions, answers))}
+    # """
     combined_query = f"""
-    Initial Query: {query}
-    Follow-up Questions and Answers:
+    初始查询：{query}
+    后续问题和答案：
     {chr(10).join(f"Q: {q} A: {a}" for q, a in zip(follow_up_questions, answers))}
     """
 
@@ -174,7 +179,7 @@ async def main(
             rprint(f"• {url}")
 
         # Save report
-        with open("output.md", "w") as f:
+        with open("output.md", "w",encoding="utf-8") as f:
             f.write(report)
         console.print("\n[dim]Report has been saved to output.md[/dim]")
 

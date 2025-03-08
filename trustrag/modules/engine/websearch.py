@@ -1,9 +1,16 @@
-from typing import List, Dict, Optional
-from duckduckgo_search import DDGS
-
-from typing import List, Dict, Optional
+from typing import List, Dict, Optional, Union, Any
 import requests
+from duckduckgo_search import DDGS
+from dataclasses import dataclass
 
+@dataclass
+class SearchResult:
+    """Standardized search result format regardless of the search engine used."""
+    title: str
+    url: str
+    description: str
+    position: int
+    metadata: Dict[str, Any] = None
 
 class DuckduckEngine:
     def __init__(self, proxy: Optional[str] = None, timeout: int = 20) -> None:
@@ -41,12 +48,11 @@ class DuckduckEngine:
             print(f"Body: {result['body']}\n")
 
 
-
 class SearxngEngine:
     def __init__(
-        self,
-        searxng_url: str = "http://localhost:8080/search",
-        timeout: int = 20
+            self,
+            searxng_url: str = "http://localhost:8080/search",
+            timeout: int = 20
     ) -> None:
         """
         Initialize the SearxngEngine class.
@@ -63,10 +69,10 @@ class SearxngEngine:
         }
 
     def search(
-        self,
-        query: str,
-        top_k: int = 5,
-        **kwargs
+            self,
+            query: str,
+            top_k: int = 5,
+            **kwargs
     ) -> List[Dict[str, str]]:
         """
         Perform a search and return the results.
@@ -132,7 +138,7 @@ if __name__ == "__main__":
 
     # Perform a search
     search_results = searxng.search(
-        "医疗的梅奥 默沙东",
+        "大模型强化学习技术",
         language="zh-CN",
         top_k=5
     )

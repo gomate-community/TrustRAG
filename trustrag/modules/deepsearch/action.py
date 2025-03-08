@@ -1,11 +1,14 @@
-from typing import List, Dict, TypedDict, Optional
-from dataclasses import dataclass
 import asyncio
-import openai
-from trustrag.modules.deepsearch.finder.services import search_service
-from trustrag.modules.deepsearch.agent.providers import trim_prompt, get_client_response
-from trustrag.modules.prompt.templates import DEEPSEARCH_SYSTEM_PROMPT
 import json
+from dataclasses import dataclass
+from typing import List, Dict, TypedDict, Optional
+
+import loguru
+import openai
+
+from trustrag.modules.deepsearch.agent.providers import trim_prompt, get_client_response
+from trustrag.modules.deepsearch.finder.services import search_service
+from trustrag.modules.prompt.templates import DEEPSEARCH_SYSTEM_PROMPT
 
 
 class SearchResponse(TypedDict):
@@ -24,19 +27,24 @@ class SerpQuery:
 
 
 async def generate_serp_queries(
-    query: str,
-    client: openai.OpenAI,
-    model: str,
-    num_queries: int = 3,
-    learnings: Optional[List[str]] = None,
+        query: str,
+        client: openai.OpenAI,
+        model: str,
+        num_queries: int = 3,
+        learnings: Optional[List[str]] = None,
 ) -> List[SerpQuery]:
     """Generate SERP queries based on user input and previous learnings."""
 
-    prompt = f"""Given the following prompt from the user, generate a list of SERP queries to research the topic. Return a JSON object with a 'queries' array field containing {num_queries} queries (or less if the original prompt is clear). Each query object should have 'query' and 'research_goal' fields. Make sure each query is unique and not similar to each other: <prompt>{query}</prompt>"""
-
+    # prompt = f"""Given the following prompt from the user, generate a list of SERP queries to research the topic. Return a JSON object with a 'queries' array field containing {num_queries} queries (or less if the original prompt is clear). Each query object should have 'query' and 'research_goal' fields. Make sure each query is unique and not similar to each other: <prompt>{query}</prompt>"""
+    prompt  = f"""根据用户提供的以下提示，生成SERP（Search Engine Results Page ，搜索引擎结果页面）查询列表以研究该主题。
+    返回一个JSON对象，其中包含'queries'数组字段，该字段包含{num_queries}个查询（如果原始提示已经很明确，则可以少于此数量）。
+    每个查询对象应有'query'和'research_goal'字段。
+    确保每个查询都是唯一的，层层递进的，彼此之间不要相似。
+    请注意JSON对象一定要格式正确，不要输出其他额外内容。"""
     if learnings:
-        prompt += f"\n\nHere are some learnings from previous research, use them to generate more specific queries: {' '.join(learnings)}"
-
+        # prompt += f"\n\nHere are some learnings from previous research, use them to generate more specific queries: {' '.join(learnings)}"
+        prompt += f"\n\n这里是之前研究步骤的一些发现，请使用它们生成更具体的查询：{' '.join(learnings)}。请确保生成的查询与用户原始提示的语言保持一致。"
+        # prompt += f"\n\n以下是从以前的研究步骤中得到的一些经验，请使用它们来生成更具体的查询：{' '.join(learnings)}"
     response = await get_client_response(
         client=client,
         model=model,
@@ -46,7 +54,8 @@ async def generate_serp_queries(
         ],
         response_format={"type": "json_object"},
     )
-
+    loguru.logger.info("generate_serp_queries done:")
+    loguru.logger.info(response)
     try:
         queries = response.get("queries", [])
         return [SerpQuery(**q) for q in queries][:num_queries]
@@ -57,12 +66,12 @@ async def generate_serp_queries(
 
 
 async def process_serp_result(
-    query: str,
-    search_result: SearchResponse,
-    client: openai.OpenAI,
-    model: str,
-    num_learnings: int = 3,
-    num_follow_up_questions: int = 3,
+        query: str,
+        search_result: SearchResponse,
+        client: openai.OpenAI,
+        model: str,
+        num_learnings: int = 3,
+        num_follow_up_questions: int = 3,
 ) -> Dict[str, List[str]]:
     """Process search results to extract learnings and follow-up questions."""
 
@@ -75,13 +84,22 @@ async def process_serp_result(
     # Create the contents string separately
     contents_str = "".join(f"<content>\n{content}\n</content>" for content in contents)
 
+    # prompt = (
+    #     f"Given the following contents from a SERP search for the query <query>{query}</query>, "
+    #     f"generate a list of learnings from the contents. Return a JSON object with 'learnings' "
+    #     f"and 'followUpQuestions' keys with array of strings as values. Include up to {num_learnings} learnings and "
+    #     f"{num_follow_up_questions} follow-up questions. The learnings should be unique, "
+    #     "concise, and information-dense, including entities, metrics, numbers, and dates.\n\n"
+    #     f"<contents>{contents_str}</contents>"
+    # )
+
     prompt = (
-        f"Given the following contents from a SERP search for the query <query>{query}</query>, "
-        f"generate a list of learnings from the contents. Return a JSON object with 'learnings' "
-        f"and 'followUpQuestions' keys with array of strings as values. Include up to {num_learnings} learnings and "
-        f"{num_follow_up_questions} follow-up questions. The learnings should be unique, "
-        "concise, and information-dense, including entities, metrics, numbers, and dates.\n\n"
+        f"根据以下对查询<query>{query}</query>的SERP搜索内容，"
+        f"生成从内容中得到的学习要点列表。返回一个JSON对象，包含'learnings'和'followUpQuestions'键(key)，"
+        f"值(value)为字符串数组。包括最多{num_learnings}个学习要点和{num_follow_up_questions}个后续问题。"
+        f"学习要点应该独特、简洁且信息丰富，包括实体、指标、数字和日期。\n\n"
         f"<contents>{contents_str}</contents>"
+        f"请确保生成的学习要点和后续问题与用户原始查询({query})的语言保持一致。"
     )
 
     response = await get_client_response(
@@ -98,8 +116,8 @@ async def process_serp_result(
         return {
             "learnings": response.get("learnings", [])[:num_learnings],
             "followUpQuestions": response.get("followUpQuestions", [])[
-                :num_follow_up_questions
-            ],
+                                 :num_follow_up_questions
+                                 ],
         }
     except json.JSONDecodeError as e:
         print(f"Error parsing JSON response: {e}")
@@ -108,11 +126,11 @@ async def process_serp_result(
 
 
 async def write_final_report(
-    prompt: str,
-    learnings: List[str],
-    visited_urls: List[str],
-    client: openai.OpenAI,
-    model: str,
+        prompt: str,
+        learnings: List[str],
+        visited_urls: List[str],
+        client: openai.OpenAI,
+        model: str,
 ) -> str:
     """Generate final report based on all research learnings."""
 
@@ -121,14 +139,20 @@ async def write_final_report(
         150_000,
     )
 
+    # user_prompt = (
+    #     f"Given the following prompt from the user, write a final report on the topic using "
+    #     f"the learnings from research. Return a JSON object with a 'reportMarkdown' field "
+    #     f"containing a detailed markdown report (aim for 3+ pages). Include ALL the learnings "
+    #     f"from research:\n\n<prompt>{prompt}</prompt>\n\n"
+    #     f"Here are all the learnings from research:\n\n<learnings>\n{learnings_string}\n</learnings>"
+    # )
     user_prompt = (
-        f"Given the following prompt from the user, write a final report on the topic using "
-        f"the learnings from research. Return a JSON object with a 'reportMarkdown' field "
-        f"containing a detailed markdown report (aim for 3+ pages). Include ALL the learnings "
-        f"from research:\n\n<prompt>{prompt}</prompt>\n\n"
-        f"Here are all the learnings from research:\n\n<learnings>\n{learnings_string}\n</learnings>"
+        f"根据以下用户提供的提示，使用研究中获得的学习要点撰写关于该主题的最终报告。返回一个JSON对象，"
+        f"其中包含'reportMarkdown'字段，该字段包含详细的markdown报告（目标为3+页）。包括研究中的所有学习要点：\n\n"
+        f"<prompt>{prompt}</prompt>\n\n"
+        f"以下是研究中获得的所有学习要点：\n\n<learnings>\n{learnings_string}\n</learnings>"
+        f"请确保生成的报告与用户原始提示({prompt})的语言保持一致。"
     )
-
     response = await get_client_response(
         client=client,
         model=model,
@@ -154,14 +178,14 @@ async def write_final_report(
 
 
 async def deep_research(
-    query: str,
-    breadth: int,
-    depth: int,
-    concurrency: int,
-    client: openai.OpenAI,
-    model: str,
-    learnings: List[str] = None,
-    visited_urls: List[str] = None,
+        query: str,
+        breadth: int,
+        depth: int,
+        concurrency: int,
+        client: openai.OpenAI,
+        model: str,
+        learnings: List[str] = None,
+        visited_urls: List[str] = None,
 ) -> ResearchResult:
     """
     Main research function that recursively explores a topic.
@@ -193,7 +217,8 @@ async def deep_research(
             try:
                 # Search for content
                 result = await search_service.search(serp_query.query, limit=5)
-
+                loguru.logger.info("process_query:")
+                loguru.logger.info(result)
                 # Collect new URLs
                 new_urls = [
                     item.get("url") for item in result["data"] if item.get("url")
