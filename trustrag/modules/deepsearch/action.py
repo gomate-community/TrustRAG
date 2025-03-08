@@ -34,6 +34,7 @@ async def generate_serp_queries(
         learnings: Optional[List[str]] = None,
 ) -> List[SerpQuery]:
     """Generate SERP queries based on user input and previous learnings."""
+    print("正在进行研究主题的意图理解...")
 
     prompt = f"""根据用户的以下提示，生成一系列SERP查询来研究该主题。
     返回一个JSON对象，其中包含一个'queries'数组字段，包含{num_queries}个查询（如果原始提示已经很明确，则可以少于这个数量）。
@@ -81,13 +82,24 @@ async def process_serp_result(
     # Create the contents string separately
     contents_str = "".join(f"<content>\n{content}\n</content>" for content in contents)
 
+    # prompt = (
+    #     f"根据以下对查询<query>{query}</query>的网页搜索内容，"
+    #     f"生成从内容中得到的学习要点列表。返回一个JSON对象，包含'learnings'和'followUpQuestions'键(key)，"
+    #     f"值(value)为字符串数组。包括最多{num_learnings}个学习要点和{num_follow_up_questions}个后续问题。"
+    #     f"学习要点应该独特、简洁且信息丰富，包括实体、指标、数字和日期。\n\n"
+    #     f"<contents>{contents_str}</contents>"
+    #     f"请确保生成的学习要点和后续问题与用户原始查询({query})的语言保持一致。"
+    # )
+
     prompt = (
-        f"根据以下对查询<query>{query}</query>的SERP搜索内容，"
-        f"生成从内容中得到的学习要点列表。返回一个JSON对象，包含'learnings'和'followUpQuestions'键(key)，"
-        f"值(value)为字符串数组。包括最多{num_learnings}个学习要点和{num_follow_up_questions}个后续问题。"
-        f"学习要点应该独特、简洁且信息丰富，包括实体、指标、数字和日期。\n\n"
+        f"基于以下来自搜索引擎结果页面(SERP)对查询<query>{query}</query>的内容，"
+        f"生成一个内容要点列表。返回一个JSON对象，包含'learnings'和'followUpQuestions'两个键，"
+        f"learnings'代表从内容中提取的关键知识要点列表[xx,xxx]，应该是独特、简洁且信息丰富的，包含实体名称、指标、数字和日期等。"
+        f"'followUpQuestions'代表根据内容生成的推荐问题列表[xxx,xxx]，用于引导更深入的探索。"
+        f"JSON对象格式一定要正确，不要输出额外内容，不要漏掉键"
+        f"值为字符串数组。包括最多{num_learnings}个要点和{num_follow_up_questions}个后续问题。"
+        f"这些要点应该是独特的、简洁的、信息密集的，包含实体、指标、数字和日期。\n\n"
         f"<contents>{contents_str}</contents>"
-        f"请确保生成的学习要点和后续问题与用户原始查询({query})的语言保持一致。"
     )
 
     response = await get_client_response(
@@ -99,7 +111,7 @@ async def process_serp_result(
         ],
         response_format={"type": "json_object"},
     )
-
+    loguru.logger.info(response)
     try:
         return {
             "learnings": response.get("learnings", [])[:num_learnings],
@@ -188,7 +200,7 @@ async def deep_research(
         num_queries=breadth,
         learnings=learnings,
     )
-
+    print("意图理解完成:",serp_queries)
     # Create a semaphore to limit concurrent requests
     semaphore = asyncio.Semaphore(concurrency)
 
@@ -196,9 +208,10 @@ async def deep_research(
         async with semaphore:
             try:
                 # Search for content
+                loguru.logger.info("正在处理子查询:" + serp_query.query)
                 result = await search_service.search(serp_query.query, limit=2)
-                loguru.logger.info("process_query:")
-                loguru.logger.info(result)
+                # loguru.logger.info(result)
+
                 # Collect new URLs
                 new_urls = [
                     item.get("url") for item in result["data"] if item.get("url")

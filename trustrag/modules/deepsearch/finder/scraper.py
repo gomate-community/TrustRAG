@@ -69,7 +69,6 @@ class PlaywrightScraper:
 
     async def scrape(self, url: str, **kwargs) -> ScrapedContent:
         """Scrape a URL using Playwright and return standardized content."""
-        loguru.logger.info(f"{url} scraped")
         if not self.browser:
             await self.setup()
 
@@ -98,7 +97,7 @@ class PlaywrightScraper:
 
             # Close the page
             await page.close()
-
+            loguru.logger.info(f"{url} scraped")
             return ScrapedContent(
                 url=url,
                 html=html,
@@ -109,7 +108,6 @@ class PlaywrightScraper:
                     "headers": response.headers if response else {},
                 },
             )
-
         except Exception as e:
             loguru.logger.error(f"Error scraping {url}: {str(e)}")
             return ScrapedContent(
@@ -162,7 +160,8 @@ async def main():
         # 要爬取的网址
         target_url = "https://blog.sciencenet.cn/blog-2089193-1469701.html"
         target_url = "https://blog.csdn.net/2401_85375151/article/details/144805338"
-        target_url = "https://zhuanlan.zhihu.com/p/19647641182"
+        target_url = "https://blog.csdn.net/csdnnews/article/details/146084709?spm=1000.2115.3001.5926"
+        # target_url = "https://zhuanlan.zhihu.com/p/19647641182"
         # 爬取内容
         result = await scraper.scrape(target_url)
 

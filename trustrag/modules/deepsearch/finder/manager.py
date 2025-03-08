@@ -65,7 +65,7 @@ class SearchAndScrapeManager:
             semaphore = asyncio.Semaphore(max_concurrent_scrapes)
 
             async def scrape_with_semaphore(url):
-                loguru.logger.info("Scraping %s"+url)
+                loguru.logger.info("Scraping url==>:"+url)
                 async with semaphore:
                     return await self.scrape(url, **kwargs)
 
