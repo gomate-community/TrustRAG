@@ -7,6 +7,7 @@
 
 ```bash
 docker run --rm \
+    --name=searxng \
 	-d -p 8080:8080 \
 	-v "${PWD}/searxng:/etc/searxng" \
 	-e "BASE_URL=http://localhost:8080/" \
