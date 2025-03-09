@@ -152,7 +152,7 @@ async def main(
             rprint(f"• {learning}")
 
         # Generate report
-        task = progress.add_task("Writing final report...", total=None)
+        task = progress.add_task("正在生成最终的研究报告...", total=None)
         report = await write_final_report(
             # prompt=combined_query,
             prompt=query,
@@ -164,7 +164,7 @@ async def main(
         progress.remove_task(task)
 
         # Show results
-        console.print("\n[bold green]Research Complete![/bold green]")
+        console.print("\n[bold green]研究完成![/bold green]")
         console.print("\n[yellow]Final Report:[/yellow]")
         console.print(Panel(report, title="Research Report"))
 
