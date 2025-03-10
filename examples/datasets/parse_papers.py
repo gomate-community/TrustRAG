@@ -1,65 +1,138 @@
 import os
+import logging
 from magic_pdf.data.data_reader_writer import FileBasedDataWriter, FileBasedDataReader
 from magic_pdf.data.dataset import PymuDocDataset
 from magic_pdf.model.doc_analyze_by_custom_model import doc_analyze
 from magic_pdf.config.enums import SupportedPdfParseMethod
 from tqdm import tqdm
 
-# 要处理的目录列表
-directories = [
-    "papers/topic_Chain_of_Thought/pdfs",
-    "papers/topic_LLM_Post-Training/pdfs",
-    "papers/topic_Reasoning_Large_Language_Models/pdfs",
+# Configure logging
+logging.basicConfig(
+    level=logging.INFO,
+    format='%(asctime)s - %(levelname)s - %(message)s',
+    datefmt='%Y-%m-%d %H:%M:%S'
+)
+logger = logging.getLogger('pdf_processor')
+
+# Target directories to process
+TOPIC_DIRECTORIES = [
+    "papers/topic_Chain_of_Thought",
+    "papers/topic_LLM_Post-Training",
+    "papers/topic_Reasoning_Large_Language_Models",
 ]
 
-def process_pdf(pdf_file_path, output_dir):
-    pdf_file_name = os.path.basename(pdf_file_path)  # 获取 PDF 文件名
-    name_without_suff = pdf_file_name.split(".")[0]  # 去掉文件扩展名
 
-    # 准备环境
-    local_image_dir = os.path.join(output_dir, "images")  # 图片输出目录
-    local_md_dir = output_dir  # Markdown 输出目录
-    image_dir = str(os.path.basename(local_image_dir))  # 图片目录名称
+def process_pdf(pdf_path, output_dir):
+    """
+    Process a PDF file and generate various output files.
 
-    os.makedirs(local_image_dir, exist_ok=True)  # 创建图片输出目录
+    Args:
+        pdf_path: Path to the PDF file
+        output_dir: Directory where outputs will be saved
+    """
+    pdf_filename = os.path.basename(pdf_path)
+    base_filename = os.path.splitext(pdf_filename)[0]
 
-    # 创建文件写入对象
-    image_writer, md_writer = FileBasedDataWriter(local_image_dir), FileBasedDataWriter(local_md_dir)
+    logger.info(f"Processing PDF: {pdf_filename}")
 
-    # 读取 PDF 文件字节
-    reader1 = FileBasedDataReader("")
-    pdf_bytes = reader1.read(pdf_file_path)  # 读取 PDF 文件内容
+    # Prepare directory structure
+    images_dir_path = os.path.join(output_dir, "images")
+    images_dir_name = os.path.basename(images_dir_path)
 
-    # 处理 PDF 文件
-    # 创建数据集实例
-    ds = PymuDocDataset(pdf_bytes)
+    os.makedirs(images_dir_path, exist_ok=True)
+    logger.debug(f"Created images directory: {images_dir_path}")
 
-    # 推断 PDF 文件类型并进行相应处理
-    if ds.classify() == SupportedPdfParseMethod.OCR:
-        infer_result = ds.apply(doc_analyze, ocr=True)  # 使用 OCR 进行解析
-        pipe_result = infer_result.pipe_ocr_mode(image_writer)  # 处理 OCR 模式结果
+    # Initialize file writers
+    image_writer = FileBasedDataWriter(images_dir_path)
+    md_writer = FileBasedDataWriter(output_dir)
+
+    # Read PDF content
+    pdf_reader = FileBasedDataReader("")
+    pdf_bytes = pdf_reader.read(pdf_path)
+    logger.debug(f"Read {len(pdf_bytes)} bytes from {pdf_filename}")
+
+    # Process PDF
+    dataset = PymuDocDataset(pdf_bytes)
+    pdf_type = dataset.classify()
+    logger.info(f"Detected PDF type: {pdf_type}")
+
+    # Apply appropriate processing based on PDF type
+    if pdf_type == SupportedPdfParseMethod.OCR:
+        logger.info(f"Using OCR mode for {pdf_filename}")
+        inference_result = dataset.apply(doc_analyze, ocr=True)
+        processing_result = inference_result.pipe_ocr_mode(image_writer)
     else:
-        infer_result = ds.apply(doc_analyze, ocr=False)  # 使用文本模式进行解析
-        pipe_result = infer_result.pipe_txt_mode(image_writer)  # 处理文本模式结果
+        logger.info(f"Using text mode for {pdf_filename}")
+        inference_result = dataset.apply(doc_analyze, ocr=False)
+        processing_result = inference_result.pipe_txt_mode(image_writer)
 
-    # 绘制结果并获取内容
-    infer_result.draw_model(os.path.join(local_md_dir, f"{name_without_suff}_model.pdf"))  # 绘制模型结果
-    model_inference_result = infer_result.get_infer_res()  # 获取模型推断结果
-    pipe_result.draw_layout(os.path.join(local_md_dir, f"{name_without_suff}_layout.pdf"))  # 绘制布局结果
-    pipe_result.draw_span(os.path.join(local_md_dir, f"{name_without_suff}_spans.pdf"))  # 绘制跨度结果
-    md_content = pipe_result.get_markdown(image_dir)  # 获取 Markdown 内容
-    pipe_result.dump_md(md_writer, f"{name_without_suff}.md", image_dir)  # 导出 Markdown 文件
-    content_list_content = pipe_result.get_content_list(image_dir)  # 获取内容列表
-    pipe_result.dump_content_list(md_writer, f"{name_without_suff}_content_list.json", image_dir)  # 导出内容列表 JSON 文件
-    middle_json_content = pipe_result.get_middle_json()  # 获取中间 JSON 内容
-    pipe_result.dump_middle_json(md_writer, f'{name_without_suff}_middle.json')  # 导出中间 JSON 文件
+    # Generate output files
+    logger.debug("Generating output files")
+    model_pdf_path = os.path.join(output_dir, "model.pdf")
+    inference_result.draw_model(model_pdf_path)
+    logger.debug(f"Created model visualization: {model_pdf_path}")
 
-# 处理每个目录
-for directory in directories:
-    output_dir = os.path.join(directory, "output")  # 输出目录
-    os.makedirs(output_dir, exist_ok=True)  # 创建输出目录
+    model_inference_result = inference_result.get_infer_res()
 
-    for file_name in tqdm(os.listdir(directory)):
-        if file_name.endswith(".pdf"):  # 检查文件是否为 PDF
-            pdf_file_path = os.path.join(directory, file_name)  # 获取 PDF 文件路径
-            process_pdf(pdf_file_path, output_dir)  # 处理 PDF 文件
+    layout_pdf_path = os.path.join(output_dir, "layout.pdf")
+    processing_result.draw_layout(layout_pdf_path)
+    logger.debug(f"Created layout visualization: {layout_pdf_path}")
+
+    spans_pdf_path = os.path.join(output_dir, "spans.pdf")
+    processing_result.draw_span(spans_pdf_path)
+    logger.debug(f"Created spans visualization: {spans_pdf_path}")
+
+    # Generate markdown content
+    markdown_content = processing_result.get_markdown(images_dir_name)
+    markdown_path = f"{base_filename}.md"
+    processing_result.dump_md(md_writer, markdown_path, images_dir_name)
+    logger.info(f"Created markdown file: {markdown_path}")
+
+    # Generate content list
+    content_list = processing_result.get_content_list(images_dir_name)
+    processing_result.dump_content_list(md_writer, "content_list.json", images_dir_name)
+    logger.debug("Created content list JSON")
+
+    # Generate middle JSON
+    middle_json = processing_result.get_middle_json()
+    processing_result.dump_middle_json(md_writer, "middle.json")
+    logger.debug("Created middle JSON file")
+
+    logger.info(f"Successfully processed {pdf_filename}")
+
+
+def main():
+    """Main function to process PDFs across all topic directories."""
+    logger.info("Starting PDF processing")
+    total_pdfs = 0
+    processed_pdfs = 0
+
+    for topic_dir in TOPIC_DIRECTORIES:
+        pdfs_dir = os.path.join(topic_dir, "pdfs")
+        if not os.path.exists(pdfs_dir):
+            logger.warning(f"Directory not found: {pdfs_dir}")
+            continue
+
+        pdf_files = [f for f in os.listdir(pdfs_dir) if f.endswith(".pdf")]
+        total_pdfs += len(pdf_files)
+
+        logger.info(f"Processing topic: {topic_dir} ({len(pdf_files)} PDFs found)")
+
+        for pdf_file in tqdm(pdf_files, desc=f"Processing {os.path.basename(topic_dir)}"):
+            pdf_path = os.path.join(pdfs_dir, pdf_file)
+            base_filename = os.path.splitext(pdf_file)[0]
+            output_dir = os.path.join(topic_dir, "output", base_filename)
+
+            os.makedirs(output_dir, exist_ok=True)
+
+            try:
+                process_pdf(pdf_path, output_dir)
+                processed_pdfs += 1
+            except Exception as e:
+                logger.error(f"Error processing {pdf_file}: {str(e)}")
+
+    logger.info(f"PDF processing complete. Processed {processed_pdfs}/{total_pdfs} files.")
+
+
+if __name__ == "__main__":
+    main()

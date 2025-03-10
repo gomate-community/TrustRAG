@@ -1,0 +1,33 @@
+{
+    "services": {
+        "local": {
+            "base_url": null,
+            "api_key": null,
+            "description": "本地LLM和向量服务"
+        }
+    },
+    "models": {
+        "llm": {
+            "name": "glm-4-9b-chat",
+            "path": "H:\\pretrained_models\\llm\\glm-4-9b-chat",
+            "service": "local",
+            "description": "本地GLM-4-9B聊天模型"
+        },
+        "embedding": {
+            "name": "bge-large-zh-v1.5",
+            "path": "H:\\pretrained_models\\mteb\\bge-large-zh-v1.5",
+            "service": "local",
+            "description": "BGE大型中文嵌入模型"
+        },
+        "reranker": {
+            "name": "bge-reranker-large",
+            "path": "H:\\pretrained_models\\mteb\\bge-reranker-large",
+            "service": "local",
+            "description": "BGE大型重排序模型"
+        }
+    },
+    "paths": {
+        "docs": "H:\\Projects\\TrustRAG\\data\\docs",
+        "index": "H:\\Projects\\TrustRAG\\examples\\retrievers\\dense_cache"
+    }
+}
