@@ -2,12 +2,12 @@
     "services": {
         "dmx": {
             "base_url": "https://www.dmxapi.com/v1",
-            "api_key": "sk-gDbFoQAYz9pwqBsH0aPA1H8DN9s0B9F3vWNjjPcijRBFjk7f",
+            "api_key": "sk-xx",
             "description": "DMX API 服务"
         },
         "rerank": {
             "base_url": "http://localhost:3600",
-            "api_key": "sk-XTcBLdakFcZjdQTt7e29Ca9bF8F1495dB447E3Af023cF4E6",
+            "api_key": "sk-xxx",
             "description": "重排序服务"
         }
     },

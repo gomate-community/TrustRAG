@@ -26,3 +26,6 @@ examples/rag/mobile_rag.py
 **/.ipynb_checkpoints/
 .virtual_documents/
 examples/retrievers/dense_cache
+examples/datasets/papers
+examples/download/models
+.gradio

@@ -17,7 +17,6 @@ import loguru
 import pandas as pd
 
 from trustrag.applications.rag_openai import RagApplication, ApplicationConfig
-from trustrag.modules.reranker.bge_reranker import BgeRerankerConfig
 from trustrag.modules.retrieval.dense_retriever import DenseRetrieverConfig
 from datetime import datetime
 import pytz
@@ -533,7 +532,7 @@ with gr.Blocks(theme="soft") as demo:
                 )
             with gr.Column(scale=4):
                 with gr.Row():
-                    chatbot = gr.Chatbot(label='TrustRAG Application').style(height=650)
+                    chatbot = gr.Chatbot(label='TrustRAG Application', height=650)
                 with gr.Row():
                     message = gr.Textbox(label='Please enter a question')
                 with gr.Row():
@@ -583,13 +582,16 @@ with gr.Blocks(theme="soft") as demo:
                                state
                            ],
                            outputs=[message, chatbot, state, search, rewrite] + checkbox_outputs)
+    with gr.Tab("\N{book} DeepRsearch"):
+        with gr.Row():
+            gr.Markdown(
+                """>Remind：[TrustRAG Application](https://github.com/gomate-community/TrustRAG/issues)If you have any questions, please provide feedback in [Github Issue区](https://github.com/gomate-community/TrustRAG/issues) .""")
 
-demo.queue(concurrency_count=2).launch(
+demo.queue(max_size=2).launch(
     server_name='0.0.0.0',
     server_port=7860,
     share=True,
     show_error=True,
     debug=True,
-    enable_queue=True,
     inbrowser=False,
 )

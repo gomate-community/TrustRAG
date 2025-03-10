@@ -15,7 +15,7 @@ from trustrag.modules.citation.match_citation import MatchCitation
 from trustrag.modules.document.chunk import TextChunker
 from trustrag.modules.document.common_parser import CommonParser
 from trustrag.modules.generator.chat import OpenAIChat
-from trustrag.modules.generator.llm import PROMPT_TEMPLATE
+from trustrag.modules.prompt.templates import CHAT_PROMPT_TEMPLATES
 from trustrag.modules.judger.llm_judger import LLMJudger
 from trustrag.modules.retrieval.dense_retriever import DenseRetriever
 from trustrag.modules.retrieval.embedding import OpenAIEmbedding
@@ -113,7 +113,7 @@ class RagApplication():
             print(idx + 1)
             context_content = context_content + str(idx + 1) + "." + item['text'] + "\n"
         print(context_content)
-        user_input = PROMPT_TEMPLATE['RAG_PROMPT_TEMPALTE'].format(question=question, context=context_content)
+        user_input = CHAT_PROMPT_TEMPLATES['RAG_PROMPT_TEMPALTE'].format(question=question, context=context_content)
         loguru.logger.info("User Request：\n" + user_input)
 
         history = [
