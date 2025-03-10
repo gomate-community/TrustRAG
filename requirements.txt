@@ -44,7 +44,7 @@ readability
 PyMuPDF
 hanziconv
 PyPDF2
-gradio==3.50.2
+gradio
 loguru
 xgboost
 bm25s
