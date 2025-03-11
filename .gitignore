@@ -29,3 +29,4 @@ examples/retrievers/dense_cache
 examples/datasets/papers
 examples/download/models
 .gradio
+examples/datasets/arxiv/papers

@@ -20,8 +20,9 @@ from trustrag.applications.rag_openai import RagApplication, ApplicationConfig
 from trustrag.modules.retrieval.dense_retriever import DenseRetrieverConfig
 from datetime import datetime
 import pytz
-from trustrag.config.config_loader import config
+from trustrag.config.config_loader import ConfigLoader
 # ========================== Config Start====================
+config=ConfigLoader(config_path="config_online.json")
 # 加载配置
 llm_service = config.get_config('services.dmx')
 llm_model = config.get_config('models.llm')
@@ -585,7 +586,7 @@ with gr.Blocks(theme="soft") as demo:
     with gr.Tab("\N{book} DeepRsearch"):
         with gr.Row():
             gr.Markdown(
-                """>Remind：[TrustRAG Application](https://github.com/gomate-community/TrustRAG/issues)If you have any questions, please provide feedback in [Github Issue区](https://github.com/gomate-community/TrustRAG/issues) .""")
+                """DeepResearch Mode""")
 
 demo.queue(max_size=2).launch(
     server_name='0.0.0.0',

@@ -1,4 +1,3 @@
-import asyncio
 import os
 from enum import Enum
 from typing import Dict, Optional, Any, List, TypedDict
@@ -8,6 +7,7 @@ import loguru
 from firecrawl import FirecrawlApp
 
 from trustrag.modules.deepsearch.finder.manager import SearchAndScrapeManager
+from trustrag.modules.deepsearch.finder.searcher import UnifiedSearchEngine
 
 
 class SearchServiceType(Enum):
@@ -15,6 +15,8 @@ class SearchServiceType(Enum):
 
     FIRECRAWL = "firecrawl"
     PLAYWRIGHT_DDGS = "playwright_ddgs"
+    SEARXNGg_DDGS = "searxng_ddgs"
+    QDRANT = "qdrant"
 
 
 class SearchResponse(TypedDict):
@@ -44,10 +46,21 @@ class SearchService:
                 api_url=os.environ.get("FIRECRAWL_BASE_URL"),
             )
             self.manager = None
+        elif service_type == SearchServiceType.QDRANT.value:
+            search_engine = UnifiedSearchEngine(
+                engine_type="qdrant",
+                qdrant_collection_name="arxiv_llms",
+                qdrant_host="192.168.1.5",
+                qdrant_port=6333,
+                embedding_model_path="G:/pretrained_models/mteb/bge-m3",
+                device="cuda"
+            )
+            self.manager = SearchAndScrapeManager(
+                search_engine=search_engine,
+            )
         else:
             self.firecrawl = None
             self.manager = SearchAndScrapeManager()
-            # Initialize resources asynchronously later
             self._initialized = False
 
     async def ensure_initialized(self):
@@ -72,30 +85,28 @@ class SearchService:
             if self.service_type == SearchServiceType.FIRECRAWL.value:
                 return await self.firecrawl.search(query, limit=limit, **kwargs)
             else:
+                formatted_data = []
                 search_results = await self.manager.search(
                     query, num_results=limit, **kwargs
                 )
-                # loguru.logger.info(search_results)
-                scraped_data = await self.manager.search_and_scrape(
-                    query, num_results=limit, scrape_all=True, **kwargs
-                )
-                # loguru.logger.info(scraped_data)
-
                 # Format the response to match Firecrawl format
-                formatted_data = []
                 for result in search_results:
                     item = {
                         "url": result.url,
                         "title": result.title,
                         "content": result.description,  # Default empty content
                     }
-
-                    # Add content if we scraped it
-                    if result.url in scraped_data["scraped_contents"]:
-                        scraped = scraped_data["scraped_contents"][result.url]
-                        item["content"] = item["content"]+scraped.text
-
-                    formatted_data.append(item)
+                    if self.service_type == SearchServiceType.QDRANT.value:
+                        loguru.logger.info("QDRANT NOT SCRAPE")
+                        continue
+                    else:
+                        scraped_data = await self.manager.search_and_scrape(
+                            query, num_results=limit, scrape_all=True, **kwargs
+                        )
+                        if result.url in scraped_data["scraped_contents"]:
+                            scraped = scraped_data["scraped_contents"][result.url]
+                            item["content"] = item["content"] + scraped.text
+                formatted_data.append(item)
 
                 return {"data": formatted_data}
         except Exception as e:
@@ -159,16 +170,18 @@ class Firecrawl:
             return {"data": []}
 
 
-
-
 # Initialize a global instance with the default settings
 search_service = SearchService(
     service_type=os.getenv("DEFAULT_SCRAPER", "playwright_ddgs")
 )
-async def search_example():
 
+
+async def search_example():
     results = await search_service.search("大模型强化学习技术", limit=1)
     print(results)
+
+
 if __name__ == '__main__':
     import asyncio
+
     asyncio.run(search_example())

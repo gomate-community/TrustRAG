@@ -79,19 +79,19 @@ class QdrantEngine:
         :return: List of payloads from the closest vectors.
         """
         # Generate embedding using the provided embedding generator
-        vector = self.embedding_generator.generate_embedding([text])
+        vector = self.embedding_generator.generate_embedding(text)
 
         # Search for closest vectors in the collection
         search_result = self.client.query_points(
             collection_name=self.collection_name,
-            query=vector[0],  # Use the first (and only) embedding
+            query=vector,
             query_filter=query_filter,
             limit=limit,
         ).points
 
         # Extract payloads from search results
-        payloads = [hit.payload for hit in search_result]
-        return payloads
+        search_result = [{"payload": hit.payload, "score": hit.score} for hit in search_result]
+        return search_result
 
     def build_filter(self, conditions: List[Dict[str, Any]]) -> Filter:
         """

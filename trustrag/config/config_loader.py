@@ -17,21 +17,22 @@ class ConfigLoader:
             cls._instance = super(ConfigLoader, cls).__new__(cls)
         return cls._instance
     
-    def __init__(self):
+    def __init__(self,config_path):
         """初始化配置加载器"""
+        self.config_path=config_path
         if self._config is None:
             self.load_config()
     
     def load_config(self) -> None:
         """加载配置文件"""
-        config_path = os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(__file__))), 'config.json')
+        # config_path = os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(__file__))), 'config.json')
         try:
-            with open(config_path, 'r', encoding='utf-8') as f:
+            with open(self.config_path, 'r', encoding='utf-8') as f:
                 self._config = json.load(f)
         except FileNotFoundError:
-            raise FileNotFoundError(f"配置文件未找到：{config_path}")
+            raise FileNotFoundError(f"配置文件未找到：{self.config_path}")
         except json.JSONDecodeError:
-            raise ValueError(f"配置文件格式错误：{config_path}")
+            raise ValueError(f"配置文件格式错误：{self.config_path}")
     
     def get_config(self, key: str = None) -> Dict[str, Any]:
         """获取配置信息
@@ -54,5 +55,4 @@ class ConfigLoader:
                 raise KeyError(f"配置项未找到：{key}")
         return value
 
-# 创建全局配置实例
-config = ConfigLoader()
+
