@@ -74,8 +74,10 @@ if __name__ == "__main__":
 
     ]
     vectors = qdrant_engine.embedding_generator.generate_embeddings([doc["description"] for doc in documents])
+    print(vectors)
     print(vectors.shape)
     print(type(vectors))
+    print(vectors.dtype)
     payload = [doc for doc  in documents]
 
     # Upload vectors and payload
