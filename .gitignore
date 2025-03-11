@@ -30,3 +30,4 @@ examples/datasets/papers
 examples/download/models
 .gradio
 examples/datasets/arxiv/papers
+examples/projects/arxiv/papers
