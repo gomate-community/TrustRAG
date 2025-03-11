@@ -190,12 +190,64 @@ for result in results:
 ```
 
 ### 5 Ranking Model
+<details>
+<summary>Bge-Rerank</summary>
+
+We have use [bge-reranker](https://github.com/FlagOpen/FlagEmbedding) as our base reranker model.
 ```python
+from trustrag.modules.reranker.bge_reranker import BgeReranker, BgeRerankerConfig
 reranker_config = BgeRerankerConfig(
-    model_name_or_path=reranker_model_path
+    model_name_or_path='llms/bge-reranker-large'
 )
 bge_reranker = BgeReranker(reranker_config)
 ```
+</details>
+
+<details>
+<summary>PointWise-Rerank</summary>
+We have two pointwise methods so far:
+
+`relevance generation`: LLMs are prompted to judge whether the given query and document are relevant. Candidate documents are reranked based on the likelihood of generating a "yes" response by LLMs. It is the rerank method used in (https://arxiv.org/pdf/2211.09110).
+
+`query generation`: LLMs are prompted to generate a pseudo-query based on the given document. Candidate documents are reranked based on the likelihood of generating the target query by LLMs. It is the rerank method used in (https://arxiv.org/pdf/2204.07496).
+
+We have implemented [flan-t5](https://huggingface.co/docs/transformers/model_doc/flan-t5) as our pointwise reranker model.
+```python
+from trustrag.modules.reranker.llm_reranker import LLMRerankerConfig, PointWiseReranker
+reranker_config = LLMRerankerConfig(
+    model_name_or_path="flan-t5-small"
+)
+llm_reranker = PointWiseReranker(reranker_config)
+```
+</details>
+
+<details>
+<summary>PairWise-Rerank</summary>
+Waiting to implement...
+</details>
+
+<details>
+<summary>ListWise-Rerank</summary>
+Waiting to implement...
+</details>
+
+<details>
+<summary>SetWise-Rerank</summary>
+We have one setwise method so far:
+
+`setwise likelihood`: LLMs are prompted to judge which document is the most relevant to the given query. Candidate documents are reranked based on the likelihood of generating the label as the most relevant document by LLMs. It is the base rerank method used in (https://arxiv.org/pdf/2310.09497).
+
+```python
+from trustrag.modules.reranker.llm_reranker import LLMRerankerConfig, SetWiseReranker
+reranker_config = LLMRerankerConfig(
+    model_name_or_path="qwen2-7B-instruct"
+)
+llm_reranker = SetWiseReranker(reranker_config)
+```
+</details>
+
+For more details, please refer to [reranker inference](./examples/rerankers/).
+
 ### 6 Generator Configuration
 ```python
 glm4_chat = GLM4Chat(llm_model_path)
