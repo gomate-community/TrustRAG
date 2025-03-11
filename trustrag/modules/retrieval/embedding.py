@@ -61,6 +61,7 @@ class SentenceTransformerEmbedding(EmbeddingGenerator):
     ):
         self.device = device or ("cuda" if torch.cuda.is_available() else "cpu")
         self.model = SentenceTransformer(model_name_or_path, device=self.device)
+        self.embedding_size = self.model.get_sentence_embedding_dimension()
 
     def generate_embeddings(self, texts: List[str]) -> np.ndarray:
         return self.model.encode(texts, show_progress_bar=False)

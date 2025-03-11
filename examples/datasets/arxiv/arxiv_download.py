@@ -214,8 +214,8 @@ if __name__ == "__main__":
     # 多个主题批量下载
     topics = [
         "Reasoning Large Language Models",
-        # "LLM Post-Training",
-        # "Chain of Thought",
+        "LLM Post-Training",
+        "Chain of Thought",
     ]
 
     batch_download_topics(topics, max_papers_per_topic=200)

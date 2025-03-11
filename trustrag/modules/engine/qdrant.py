@@ -79,12 +79,19 @@ class QdrantEngine:
         :return: List of payloads from the closest vectors.
         """
         # Generate embedding using the provided embedding generator
-        vector = self.embedding_generator.generate_embedding([text])
+        vector = self.embedding_generator.generate_embedding(text)
+
+        # if not isinstance(vectors, np.ndarray):
+        #     vectors = np.array(vectors)
+        print(vector.shape)
+        print(vector.dtype)
+        print(type(vector))
+
 
         # Search for closest vectors in the collection
         search_result = self.client.query_points(
             collection_name=self.collection_name,
-            query=vector[0],  # Use the first (and only) embedding
+            query=vector,  # Use the first (and only) embedding
             query_filter=query_filter,
             limit=limit,
         ).points
