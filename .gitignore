@@ -31,3 +31,5 @@ examples/download/models
 .gradio
 examples/datasets/arxiv/papers
 examples/projects/arxiv/papers
+trustrag/modules/deepsearch/.env
+*.env
