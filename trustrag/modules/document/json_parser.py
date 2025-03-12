@@ -1,15 +1,8 @@
 import json
 
-import chardet
-
 from trustrag.modules.document.utils import PROJECT_BASE
 from trustrag.modules.document.utils import find_codec
-
-
-def get_encoding(file):
-    with open(file, 'rb') as f:
-        tmp = chardet.detect(f.read())
-        return tmp['encoding']
+from trustrag.modules.document.utils import get_encoding
 
 
 class JsonParser(object):

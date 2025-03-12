@@ -12,6 +12,7 @@
 import os
 import pathlib
 import re
+import chardet
 
 import tiktoken
 
@@ -143,6 +144,19 @@ def findMaxTm(fnm):
     except Exception as e:
         pass
     return m
+def get_encoding(file: Union[str, bytes]) -> str:
+    """
+    Detects the encoding of a given file.
+
+    Args:
+        file (Union[str, bytes]): The file path or byte stream to detect the encoding for.
+
+    Returns:
+        str: The detected encoding of the file.
+    """
+    with open(file, 'rb') as f:
+        tmp = chardet.detect(f.read())
+        return tmp['encoding']
 
 
 # # https://stackoverflow.com/questions/76106366/how-to-use-tiktoken-in-offline-mode-computer
