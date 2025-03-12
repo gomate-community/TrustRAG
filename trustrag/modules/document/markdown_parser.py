@@ -11,25 +11,11 @@
 """
 import re
 from typing import List, Dict, Union
-
-import chardet
+from trustrag.modules.document.utils import get_encoding
 from langchain_community.document_loaders import UnstructuredMarkdownLoader
 from langchain_core.documents.base import Document
 
 
-def get_encoding(file: Union[str, bytes]) -> str:
-    """
-    Detects the encoding of a given file.
-
-    Args:
-        file (Union[str, bytes]): The file path or byte stream to detect the encoding for.
-
-    Returns:
-        str: The detected encoding of the file.
-    """
-    with open(file, 'rb') as f:
-        tmp = chardet.detect(f.read())
-        return tmp['encoding']
 
 
 class MarkdownParser:

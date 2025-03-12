@@ -1,10 +1,5 @@
 from tqdm import tqdm
-import chardet
-
-def get_encoding(file):
-    with open(file, 'rb') as f:
-        tmp = chardet.detect(f.read())
-        return tmp['encoding']
+from trustrag.modules.document.utils import get_encoding
 
 class TextParser(object):
     def parse(self, fnm, encoding="utf-8", from_page=0, to_page=100000, **kwargs):
