@@ -12,11 +12,9 @@
 import os
 import pathlib
 import re
+from typing import Union
+
 import chardet
-
-import tiktoken
-
-import pathlib
 
 # 获取当前文件所在的路径
 current_path = pathlib.Path(__file__).resolve()
@@ -33,7 +31,6 @@ while project_root.name.lower() != 'trustrag' and project_root.name.lower() != '
 # 在 Windows 中输出带反斜杠的路径
 project_root_str = str(project_root)
 print(f"项目根目录为: {project_root_str}")
-
 
 PROJECT_BASE = project_root_str
 all_codecs = [
@@ -144,6 +141,8 @@ def findMaxTm(fnm):
     except Exception as e:
         pass
     return m
+
+
 def get_encoding(file: Union[str, bytes]) -> str:
     """
     Detects the encoding of a given file.
@@ -157,7 +156,6 @@ def get_encoding(file: Union[str, bytes]) -> str:
     with open(file, 'rb') as f:
         tmp = chardet.detect(f.read())
         return tmp['encoding']
-
 
 # # https://stackoverflow.com/questions/76106366/how-to-use-tiktoken-in-offline-mode-computer
 # tiktoken_cache_dir = "/data/users/searchgpt/yq/GoMate/data/docs"
