@@ -193,18 +193,18 @@ class LLMCitation:
             with open(output_file, 'w', encoding='utf-8') as f:
                 json.dump(json_data, f, ensure_ascii=False, indent=4)
         except Exception as e:
-            print(json_data)
             output_file = "citation_match_llm_res.json"
             with open(output_file, 'w', encoding='utf-8') as f:
-                loguru.logger.info(json_data)
+                # loguru.logger.info(json_data)
                 json.dump(json_data, f, ensure_ascii=False, indent=4)
         loguru.logger.info(f"Parameters saved to {output_file}")
         citation_result = self.extract_citations(response=response)
         parsed_result = citation_result["parsed_result"]
-        print(citation_result)
 
         quote_list = []
-
+        existed_citations=[]
+        citation_indices_map = {}
+        start_indices = 0
         for idx, citation_item in enumerate(parsed_result):
             # todo:判断citation_item的类型，是text还是citation，
             # 如果当前citation_item是text，判断下一个类型是否为是citation，如果为citation，那么best_idx等于下面：
@@ -212,13 +212,11 @@ class LLMCitation:
             if idx <= len(parsed_result) - 2:
                 if citation_item["type"] == "text":
                     if parsed_result[idx + 1]["type"] == "citation":
-                        best_idx = parsed_result[idx + 1]["index"]  # 这个是selected_idx的真实引号+1，例如38
-                        best_idx = selected_idx.index((int(best_idx) - 1))  #
-
-                        print(best_idx)
+                        raw_idx = parsed_result[idx + 1]["index"]  # 这个是selected_idx的真实引号+1，例如38
+                        best_idx = selected_idx.index((int(raw_idx) - 1))  #
+                        # loguru.logger.info(f"raw_idx:{raw_idx},best_idx:{best_idx}")
                         response_content = citation_item["content"]
                         select_content = selected_docs[best_idx]["content"]
-
                         highlighted_start_end = self.highlight_common_substrings(response_content, select_content)
                         group_item = {
                             "doc_id": selected_docs[best_idx]["doc_id"],
@@ -231,24 +229,36 @@ class LLMCitation:
                             "best_ratio": self.cal_common_ration(response_content, select_content),
                             "highlight": highlighted_start_end,
                         }
-
                         group_data = {
                             "doc_list": [group_item],
                             "chk_content": group_item["chk_content"],
                             "highlight": group_item["highlight"],
                         }
-                        quote_list.append(group_data)
+                        if start_indices not in citation_result["citations"] and group_data["chk_content"] not in existed_citations:
+                            quote_list.append(group_data)
+                            existed_citations.append(group_data["chk_content"])
+                            citation_indices_map[raw_idx] = start_indices
+                            start_indices += 1
 
-        response_result = ''.join([item["content"] for item in citation_result["parsed_result"]])
+        loguru.logger.info(citation_indices_map)
+        loguru.logger.info(len(quote_list))
+        final_responses=[]
+        for item in citation_result["parsed_result"]:
+            if item["type"] == "text":
+                final_responses.append(item["content"])
+            else:
+                citation_ind=citation_indices_map[item["index"]]+1
+                final_responses.append(f"[{citation_ind}]")
+        response_result = ''.join(final_responses)
         data = {'result': response_result, 'quote_list': quote_list, 'summary': ''}
-
         # Save to JSON file
         json_data['result'] = response_result
         json_data['quote_list'] = quote_list
+        # loguru.logger.info(response_result)
+
         with open(output_file, 'w', encoding='utf-8') as f:
             json.dump(json_data, f, ensure_ascii=False, indent=4)
         loguru.logger.info(f"Parameters saved to {output_file}")
-
         return data
 
 

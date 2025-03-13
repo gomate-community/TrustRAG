@@ -10,13 +10,13 @@ class ConfigLoader:
     
     _instance = None
     _config = None
-    
-    def __new__(cls):
+
+    def __new__(cls, *args, **kwargs):
         """单例模式，确保只有一个配置实例"""
         if cls._instance is None:
             cls._instance = super(ConfigLoader, cls).__new__(cls)
         return cls._instance
-    
+
     def __init__(self,config_path):
         """初始化配置加载器"""
         self.config_path=config_path
