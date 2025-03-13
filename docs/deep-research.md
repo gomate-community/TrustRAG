@@ -44,8 +44,14 @@ cp .env.example .env #配置LLM API以及搜索
 python pipeline.py
 ```
 
+功能视频演示：
+
+https://www.bilibili.com/video/BV1iLQKYmE1E/?vd_source=7cccd256b3a180013d7510536781e319
+
+
+
 ## TODO
 
--[] 大模型反思实现
--[] Gradio集成
--[] Fastapi实现
+- [] 大模型反思实现
+- [] Gradio集成
+- [] Fastapi实现
