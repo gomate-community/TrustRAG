@@ -1,6 +1,7 @@
 import json
+import re
 from typing import List
-import  re
+
 import jieba
 import loguru
 
@@ -15,7 +16,7 @@ class LLMCitation:
 
         # 定义结束符号列表
         # end_symbols = ['。', '！', '？', '…', '；', '\n'] # sent
-        end_symbols = ['。', '！', '？', '…', '；', '\n']# para
+        end_symbols = ['。', '！', '？', '…', '；', '\n']  # para
 
         # 定义引号对
         quote_pairs = {'"': '"', "'": "'", '「': '」', '『': '』'}
@@ -102,8 +103,7 @@ class LLMCitation:
                 best_match_positions = [[0, len(select_content) - 1]]
         return best_match_positions
 
-
-    def cal_common_ration(self,response,evidence):
+    def cal_common_ration(self, response, evidence):
         """
         计算答案中的段落与匹配证据的相似度，或者重合度，直接居于共现词的比例
         """
@@ -114,8 +114,7 @@ class LLMCitation:
         ratio = len(overlap) / sentence_seg_cut_length
         return ratio
 
-
-    def extract_citations(self,response:str=None):
+    def extract_citations(self, response: str = None):
         """
         xxx[1]xxx[2],
         find all citation patterns like [number]
@@ -166,6 +165,7 @@ class LLMCitation:
             "citations": citations,
             "parsed_result": parsed_result
         }
+
     def ground_response(
             self,
             question: str,
@@ -189,7 +189,7 @@ class LLMCitation:
 
         # Save to JSON file
         try:
-            output_file = "/home/yanqiang/code/citation_match_llm.json"
+            output_file = "/home/yanqiang/code/citation_match_llm_res.json"
             with open(output_file, 'w', encoding='utf-8') as f:
                 json.dump(json_data, f, ensure_ascii=False, indent=4)
         except Exception as e:
@@ -199,26 +199,25 @@ class LLMCitation:
                 loguru.logger.info(json_data)
                 json.dump(json_data, f, ensure_ascii=False, indent=4)
         loguru.logger.info(f"Parameters saved to {output_file}")
-        citation_result=self.extract_citations(response=response)
-        parsed_result=citation_result["parsed_result"]
+        citation_result = self.extract_citations(response=response)
+        parsed_result = citation_result["parsed_result"]
         print(citation_result)
 
         quote_list = []
 
-        for idx,citation_item in enumerate(parsed_result):
-            #todo:判断citation_item的类型，是text还是citation，
+        for idx, citation_item in enumerate(parsed_result):
+            # todo:判断citation_item的类型，是text还是citation，
             # 如果当前citation_item是text，判断下一个类型是否为是citation，如果为citation，那么best_idx等于下面：
             # best_idx=parsed_result[idx+1]["index"]
-            if idx<=len(parsed_result)-2:
+            if idx <= len(parsed_result) - 2:
                 if citation_item["type"] == "text":
-                    if parsed_result[idx+1]["type"] == "citation":
-
-                        best_idx=parsed_result[idx+1]["index"]# 这个是selected_idx的真实引号+1，例如38
-                        best_idx=selected_idx.index((int(best_idx)-1))#
+                    if parsed_result[idx + 1]["type"] == "citation":
+                        best_idx = parsed_result[idx + 1]["index"]  # 这个是selected_idx的真实引号+1，例如38
+                        best_idx = selected_idx.index((int(best_idx) - 1))  #
 
                         print(best_idx)
-                        response_content=citation_item["content"]
-                        select_content=selected_docs[best_idx]["content"]
+                        response_content = citation_item["content"]
+                        select_content = selected_docs[best_idx]["content"]
 
                         highlighted_start_end = self.highlight_common_substrings(response_content, select_content)
                         group_item = {
@@ -229,7 +228,7 @@ class LLMCitation:
                             "doc_title": selected_docs[best_idx]["newsinfo"]["title"],
                             # "chk_content": selected_docs[best_idx]['content'],
                             "chk_content": select_content,
-                            "best_ratio": self.cal_common_ration(response_content,select_content),
+                            "best_ratio": self.cal_common_ration(response_content, select_content),
                             "highlight": highlighted_start_end,
                         }
 
@@ -240,18 +239,15 @@ class LLMCitation:
                         }
                         quote_list.append(group_data)
 
-
-        response_result=''.join([item["content"] for item in citation_result["parsed_result"]])
+        response_result = ''.join([item["content"] for item in citation_result["parsed_result"]])
         data = {'result': response_result, 'quote_list': quote_list, 'summary': ''}
 
         # Save to JSON file
         json_data['result'] = response_result
         json_data['quote_list'] = quote_list
-        output_file = "citation_match_llm_res.json"
         with open(output_file, 'w', encoding='utf-8') as f:
             json.dump(json_data, f, ensure_ascii=False, indent=4)
         loguru.logger.info(f"Parameters saved to {output_file}")
-
 
         return data
 
