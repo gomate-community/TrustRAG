@@ -21,6 +21,53 @@ The core design of TrustRAG lies in its **high configurability and modularity**,
 
 ![framework.png](resources%2Fframework.png)
 
+## DeepResearch Features
+
+The DeepResearch framework achieves deep information search and processing through layered queries, recursive iteration, and intelligent decision-making. This process includes the following key steps:
+
+1. Intent Understanding
+   After the user inputs a query, the system parses it into multiple sub-queries to more precisely understand the user's needs.
+
+2. Processing Condition Judgment
+   The system determines whether to continue execution based on the following conditions:
+   1. **Whether the token budget is exceeded**
+   2. **Whether the action depth is exceeded**
+   > If these conditions are met, the query is terminated and the answer is returned directly; otherwise, it enters the recursive execution step.
+
+3. Recursive Execution Steps
+   During recursive execution, the system performs information retrieval, model reasoning, and context processing tasks
+   **Information Retrieval**
+   - **Get current question**
+   - **Build question execution sequence**
+   - **Recursive traversal**
+   - **Depth-first search**
+   - **Model reasoning**
+     > The system performs model reasoning, judging the next action through system prompts and context understanding.
+
+4. Action Type Determination
+   Based on the reasoning results, the system decides the next type of action to execute:
+   - **answer**: Answer action
+   - **reflect**: Reflection action
+   - **search**: Search action
+   - **read**: Reading action
+   - **coding**: Code action
+
+   > These actions affect the context and continuously update the system state.
+
+5. Result Feedback
+   Based on the final action type, the system performs the corresponding task and returns the results to the user, completing the entire process.
+
+DeepResearch process diagram:
+
+![DeepSearch.png](resources/DeepSearch.png)
+
+Run the CLI tool:
+```bash
+cd trustrag/modules/deepsearch
+cp .env.example .env #Configure LLM API and search
+python pipeline.py
+```
+
 ## ✨Key Features
 
 **“Reliable input, Trusted output”**
