@@ -43,3 +43,9 @@ cd trustrag/modules/deepsearch
 cp .env.example .env #配置LLM API以及搜索
 python pipeline.py
 ```
+
+## TODO
+
+-[] 大模型反思实现
+-[] Gradio集成
+-[] Fastapi实现
