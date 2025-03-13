@@ -48,8 +48,10 @@ python pipeline.py
 
 https://www.bilibili.com/video/BV1iLQKYmE1E/?vd_source=7cccd256b3a180013d7510536781e319
 
+
+
 ## TODO
 
--[] 大模型反思实现
--[] Gradio集成
--[] Fastapi实现
+- [] 大模型反思实现
+- [] Gradio集成
+- [] Fastapi实现
