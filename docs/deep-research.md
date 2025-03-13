@@ -35,7 +35,7 @@ DeepResearch 框架通过分层查询、递归迭代以及智能决策等步骤�
 
 DeepResearch流程示意图如下：
 
-![DeepSearch.png](resources/DeepSearch.png)
+![DeepSearch.png](../resources/DeepSearch.png)
 
 运行cli工具：
 ```bash
@@ -43,3 +43,9 @@ cd trustrag/modules/deepsearch
 cp .env.example .env #配置LLM API以及搜索
 python pipeline.py
 ```
+
+## TODO
+
+-[] 大模型反思实现
+-[] Gradio集成
+-[] Fastapi实现
