@@ -82,7 +82,7 @@ async def main(
     console.print(
         Panel.fit(
             "[bold blue]Deep Research Assistant[/bold blue]\n"
-            "[dim]An AI-powered research tool[/dim]"
+            "[dim]An AI-powered research tool by TrustRAG[/dim]"
         )
     )
 
@@ -107,7 +107,7 @@ async def main(
     depth = int((await async_prompt(depth_prompt)) or "2")
     console.print()
 
-    # # First show progress for research plan
+    # # research plan
     # console.print("\n[yellow]创建研究计划的链路...[/yellow]")
     # follow_up_questions = await generate_feedback(query, client, model)
     #
