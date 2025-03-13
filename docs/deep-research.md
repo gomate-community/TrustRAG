@@ -35,7 +35,7 @@ DeepResearch 框架通过分层查询、递归迭代以及智能决策等步骤�
 
 DeepResearch流程示意图如下：
 
-![DeepSearch.png](resources/DeepSearch.png)
+![DeepSearch.png](../resources/DeepSearch.png)
 
 运行cli工具：
 ```bash
