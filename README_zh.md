@@ -62,6 +62,13 @@ DeepResearch流程示意图如下：
 
 ![DeepSearch.png](resources/DeepSearch.png)
 
+运行cli工具：
+```bash
+cd trustrag/modules/deepsearch
+cp .env.example .env #配置LLM API以及搜索
+python pipeline.py
+```
+
 ## ✨主要特色
 
 **“Reliable input,Trusted output”**
