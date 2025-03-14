@@ -46,8 +46,8 @@ class MarkdownParser:
         else:
             loader = UnstructuredMarkdownLoader(fnm, mode="elements")
             documents = loader.load()
-        paragraphs = self.merge_header_contents(documents)
-        return paragraphs
+        paragraphs,merged_data = self.merge_header_contents(documents)
+        return paragraphs,merged_data
 
     def parse_markdown_to_documents(self, content: str) -> List[Document]:
         """
@@ -151,4 +151,4 @@ class MarkdownParser:
             })
         paragraphs = [item["title"] + "\n" + item["content"] for item in merged_data]
 
-        return paragraphs
+        return paragraphs,merged_data

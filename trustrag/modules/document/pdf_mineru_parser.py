@@ -1,10 +1,11 @@
 import requests
-
+from trustrag.modules.document.markdown_parser import MarkdownParser
 class PdfParserWithMinerU:
     def __init__(self,url='http://localhost:8888/pdf_parse'):
 
         # 服务器URL
         self.url = url
+        self.md_parser = MarkdownParser()
     def parse(self,pdf_file_path,output_dir:str="output"):
 
         # PDF文件路径
@@ -24,18 +25,20 @@ class PdfParserWithMinerU:
 
         # 发送POST请求
         response = requests.post(self.url, params=params, files=files,timeout=2000)
-
         # 检查响应
         if response.status_code == 200:
             print("PDF解析成功")
-            print(response.json())
-            print(response.json().keys())
+            markdown_content = response.json()["markdown"]
+            markdown_bytes = markdown_content.encode("utf-8")  # Convert string to bytes
+            paragraphs, merged_data = self.md_parser.parse(markdown_bytes)
+            return merged_data
         else:
             print(f"错误: {response.status_code}")
             print(response.text)
-
+            return []
 
 if __name__ == '__main__':
-    pdf_parser=PdfParserWithMinerU(url='https://aicloud.oneainexus.cn:30013/inference/aicloud-yanqiang/mineru/pdf_parse')
-    pdf_file_path= '../../../data/docs/汽车操作手册.pdf'
-    pdf_parser.parse(pdf_file_path)
+    pdf_parser=PdfParserWithMinerU(url='https://aicloud.oneainexus.cn:30013/inference/aicloud-yanqiang/gomatebackend/rag_dc/pdf_parse')
+    pdf_file_path= '../../../data/paper/16400599.pdf'
+    result=pdf_parser.parse(pdf_file_path)
+    print(result)
