@@ -150,5 +150,92 @@ class MarkdownParser:
                 'content': merged_content
             })
         paragraphs = [item["title"] + "\n" + item["content"] for item in merged_data]
-
+        merged_data=self.merge_data_entries(merged_data)
         return paragraphs,merged_data
+
+
+    def merge_data_entries(self,data_list):
+        """
+        Merge data entries where content is empty with subsequent entries.
+
+        Args:
+            data_list (list): List of dictionaries with 'title' and 'content' keys
+
+        Returns:
+            list: Processed list with merged entries
+        """
+        if not data_list:
+            return []
+
+        result = []
+        i = 0
+        while i < len(data_list):
+            current = data_list[i]
+
+            # If content is not empty, add to result and move to next item
+            if current["content"]:
+                result.append(current.copy())
+                i += 1
+                continue
+
+            # If content is empty, need to merge with subsequent entries
+            merged_title = current["title"]
+            merged_content = ""
+            j = i + 1
+
+            # Look ahead to find first non-empty content
+            while j < len(data_list):
+                next_item = data_list[j]
+                merged_title += " " + next_item["title"].strip('# ')
+
+                if next_item["content"]:
+                    merged_content = next_item["content"]
+                    break
+
+                j += 1
+
+            # Create merged entry
+            result.append({
+                "title": merged_title,
+                "content": merged_content
+            })
+
+            # Skip all entries that were merged
+            i = j + 1 if j < len(data_list) else len(data_list)
+
+        return result
+
+
+
+if __name__ == '__main__':
+    data = [
+
+        {
+            "title": "# 《安全边际》",
+            "content": "作者：塞思.卡拉曼\n导言\n第一章 投资者哪里最易出错1、投机者和失败的投资者2、与投资者对立的华尔街本质3、机构表现竞赛：客户是输家4、价值错觉：20 世纪 80 年代对垃圾债券的迷失和错误观念\n第二章 价值投资哲学5、明确你的投资目标6、价值投资：安全边际的重要性7、价值投资哲学起源8、企业评估艺术\n第三章 价值投资过程"
+        },
+        {
+            "title": "# 导 言",
+            "content": "投资者所采用的投资方法尽管种类繁多，但这些方法几乎很难带来长期成功，只会带来巨大的经济损失。它们中不具备合乎逻辑的投资程序，更像是投机或赌博。投资者经常经不住想赚快钱的诱惑，结果成了华尔街短暂疯狂的牺牲品。写本书的初衷有两个。"
+        },
+        {
+            "title": "# 第一部分",
+            "content": ""
+        },
+        {
+            "title": "# 多数投资者会在哪里跌倒",
+            "content": "投机者和失败的投资者\n与投资者对立的华尔街本质\n机构表现竞赛：客户是输家\n价值错觉：20 世纪 80 年代对垃圾债券的沉迷和错误观念"
+        },
+        {
+            "title": "# 第一章 投机者和失败的投资者",
+            "content": ""
+        },
+        {
+            "title": "# 第二章 投机者和失败的投资者",
+            "content": ""
+        },
+        {
+            "title": "# 投资与投机的对比",
+            "content": "马克•吐温说过：一个人的一生中在两种情况下他不应该去投机：当他输不起的时候，当他输得起的时候。正是由于如此，理解投资和投机之间的区别是取得投资成功的第一步。\n对投资者来说，股票代表的是相应企业的部分所有权，而债券则是给这些企业的贷款。投资者在比较证券的价格与他们被估测的价值之后做出买卖的决定。当他们认为自己知道一些其他人不知道、不关心或者宁愿忽略的事情时，他们就会买进交易。他们会买进那些回报与风险相比看起来有吸引力的证券，同时卖出那些回报不再能抵御风险的证券。。"
+        }
+    ]
