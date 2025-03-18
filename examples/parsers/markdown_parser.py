@@ -10,14 +10,19 @@
 @description: coding..
 """
 from trustrag.modules.document.markdown_parser import MarkdownParser
-from langchain_community.document_loaders import UnstructuredMarkdownLoader
-
 
 if __name__ == '__main__':
     parser=MarkdownParser()
-    paragraphs= parser.parse(fnm="../../data/docs/基础知识.md")
+    # paragraphs= parser.parse(fnm="../../data/docs/基础知识.md")
+    # # print(chunks)
+    # print(len(paragraphs))
+    # for chunk in paragraphs:
+    #     print("==="*10)
+    #     print(chunk)
+
+    _,paragraphs = parser.parse(fnm="../../output/pdf_parse/2503.04697v1.md")
     # print(chunks)
     print(len(paragraphs))
     for chunk in paragraphs:
-        print("==="*10)
+        print("===" * 10)
         print(chunk)
