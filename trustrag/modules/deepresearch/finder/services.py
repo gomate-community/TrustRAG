@@ -6,8 +6,8 @@ from typing import Dict, Optional, Any, List, TypedDict
 import loguru
 from firecrawl import FirecrawlApp
 
-from trustrag.modules.deepsearch.finder.manager import SearchAndScrapeManager
-from trustrag.modules.deepsearch.finder.searcher import UnifiedSearchEngine
+from trustrag.modules.deepresearch.finder.manager import SearchAndScrapeManager
+from trustrag.modules.deepresearch.finder.searcher import UnifiedSearchEngine
 
 
 class SearchServiceType(Enum):

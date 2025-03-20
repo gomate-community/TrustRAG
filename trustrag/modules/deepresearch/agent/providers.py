@@ -8,8 +8,8 @@ import tiktoken
 from typing import Optional
 from rich.console import Console
 from dotenv import load_dotenv
-from trustrag.modules.deepsearch.agent.text_splitter import RecursiveCharacterTextSplitter
-from trustrag.modules.deepsearch.config import EnvironmentConfig
+from trustrag.modules.deepresearch.agent.text_splitter import RecursiveCharacterTextSplitter
+from trustrag.modules.deepresearch.config import EnvironmentConfig
 
 load_dotenv()
 
