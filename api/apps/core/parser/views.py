@@ -65,8 +65,8 @@ async def parser(file: UploadFile = File(...), chunk_size: int = 512):
 
         # 解析文件
         loguru.logger.info(f"开始解析文件：{filename}")
-        text = parser.parse(content)
-        chunks = tc.chunk_text(text, chunk_size=chunk_size)
+        paragraphs = parser.parse(content)
+        chunks = tc.get_chunks(paragraphs, chunk_size=chunk_size)
         return JSONResponse(
             content={
                 "code": 200,

@@ -12,6 +12,7 @@
 import os
 
 os.environ["TOKENIZERS_PARALLELISM"] = "false"
+from itertools import combinations
 from typing import Any, List
 
 import torch
@@ -46,6 +47,15 @@ pointwise_relevance_generation = """
 查询内容为：<查询>{query}</查询>
 段落内容为：<段落>{doc}</段落>
 请只回答"Yes"或"No"。
+"""
+
+pairwise_generation = """
+你是一个专业的搜索算法助手，可以根据找出与查询最相关的文档。
+以下是查询和2段文档，每段都用数字编号依次表示。
+查询内容为：<查询>{query}</查询>
+文档A：<文档>{doc1}</文档>
+文档B：<文档>{doc2}</文档>
+根据与搜索查询相关性找出上述2段文档中最相关的段落。你应该只输出A或B，不要说任何其他话。
 """
 
 
@@ -284,5 +294,139 @@ class PointWiseReranker(BaseReranker):
                 {"text": doc, "score": score.item()}
                 for doc, score in zip(documents, scores)
             ]
+
+        return top_docs
+
+
+class PairWiseReranker(BaseReranker):
+    """
+    A reranker that utilizes a LLM to rerank a list of documents based on their relevance to a given query.
+    """
+
+    def __init__(self, config):
+        super().__init__()
+        self.config = config
+        self.rerank_tokenizer = AutoTokenizer.from_pretrained(config.model_name_or_path)
+        self.rerank_model = (
+            AutoModelForCausalLM.from_pretrained(config.model_name_or_path)
+            .half()
+            .to(config.device)
+            .eval()
+        )
+        self.device = config.device
+        print("Successful load rerank model")
+
+    def compare(self, query: str, doc1: str, doc2: str):
+        score_pair = [0, 0]
+        prompt1 = pairwise_generation.format(query=query, doc1=doc1, doc2=doc2)
+        prompt2 = pairwise_generation.format(query=query, doc1=doc2, doc2=doc1)
+        message1 = [{"role": "user", "content": prompt1}]
+        message2 = [{"role": "user", "content": prompt2}]
+        input1 = self.rerank_tokenizer.apply_chat_template(
+            message1, tokenize=False, add_generation_prompt=True
+        )
+        input2 = self.rerank_tokenizer.apply_chat_template(
+            message2, tokenize=False, add_generation_prompt=True
+        )
+        input_ids = self.rerank_tokenizer(
+            [input1, input2], return_tensors="pt"
+        ).input_ids.to(self.device)
+        output_ids = self.rerank_model.generate(
+            input_ids,
+            do_sample=False,
+            temperature=0.0,
+            top_p=None,
+            max_new_tokens=1,
+        )
+        output1 = (
+            self.rerank_tokenizer.decode(
+                output_ids[0][input_ids.shape[1] :], skip_special_tokens=True
+            )
+            .strip()
+            .upper()
+        )
+        output2 = (
+            self.rerank_tokenizer.decode(
+                output_ids[1][input_ids.shape[1] :], skip_special_tokens=True
+            )
+            .strip()
+            .upper()
+        )
+        if output1 == "A" and output2 == "B":
+            score_pair[0] += 1
+        elif output1 == "B" and output2 == "A":
+            score_pair[1] += 1
+        else:
+            score_pair[0] += 0.5
+            score_pair[1] += 0.5
+        return score_pair
+
+    def rerank(
+        self,
+        query: str,
+        documents: List[str],
+        k: int = 5,
+        is_sorted: bool = True,
+        method: str = "allpair",
+    ) -> list[dict[str, Any]]:
+        # Process input documents for uniqueness and formatting
+        if method == "allpair":
+            # Tokenize and predict relevance scores
+            scores = [0.0 for i in range(len(documents))]
+            with torch.no_grad():
+                index_ranking = list(enumerate(documents))
+                doc_pairs = list(combinations(index_ranking, 2))
+                allpairs = []
+                for (index1, doc1), (index2, doc2) in doc_pairs:
+                    score_pair = self.compare(query, doc1, doc2)
+                    scores[index1] += score_pair[0]
+                    scores[index2] += score_pair[1]
+                if is_sorted:
+                    ranked_docs = sorted(
+                        zip(documents, scores), key=lambda x: x[1], reverse=True
+                    )
+                    # Return the top k documents
+                    top_docs = [
+                        {"text": doc, "score": score} for doc, score in ranked_docs
+                    ]
+                else:
+                    top_docs = [
+                        {"text": doc, "score": score}
+                        for doc, score in zip(documents, scores)
+                    ]
+        elif method == "bubblesort":
+            k = min(k, len(documents))
+            last_end = len(documents) - 1
+            for i in range(k):
+                current_ind = last_end
+                is_change = False
+                while True:
+                    if current_ind <= i:
+                        break
+                    doc1 = documents[current_ind]
+                    doc2 = documents[current_ind - 1]
+                    score_pair = self.compare(query, doc1, doc2)
+                    if score_pair[0] > score_pair[1]:
+                        documents[current_ind - 1], documents[current_ind] = (
+                            documents[current_ind],
+                            documents[current_ind - 1],
+                        )
+                        if not is_change:
+                            is_change = True
+                            if (
+                                last_end != len(documents) - 1
+                            ):  # skip unchanged pairs at the bottom
+                                last_end += 1
+                    if not is_change:
+                        last_end -= 1
+                    current_ind -= 1
+                top_docs = [
+                    {"text": doc, "score": 1 / (i + 1)}
+                    for i, doc in enumerate(documents)
+                ]
+            # Pair documents with their scores, sort by scores in descending order
+
+        else:
+            raise NotImplementedError(f"{method}未实施！")
 
         return top_docs
