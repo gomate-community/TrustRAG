@@ -33,3 +33,6 @@ examples/datasets/arxiv/papers
 examples/projects/arxiv/papers
 trustrag/modules/deepsearch/.env
 *.env
+examples/deep-research
+examples/deep-research/local-deep-research
+trustrag.egg-info

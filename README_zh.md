@@ -376,7 +376,7 @@ app后台日志：
 >本项目感谢以下开源项目的支持与贡献：
 - 文档解析：[infiniflow/ragflow](https://github.com/infiniflow/ragflow/blob/main/deepdoc/README.md)
 - PDF文件解析：[opendatalab/MinerU](https://github.com/opendatalab/MinerU)
-- 深度搜索：[deep-research](https://github.com/dzhng/deep-research)|[deep-research-py](https://github.com/epuerta9/deep-research-py)
+- 深度搜索：[deep-research](https://github.com/dzhng/deep-research)|[deep-research-py](https://github.com/epuerta9/deep-research-py)|[deep-research](https://github.com/shibing624/deep-research/tree/main#/)
 
 ## 👉 Citation
 ```text
