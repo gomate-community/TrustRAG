@@ -2,8 +2,8 @@ import asyncio
 from typing import List, Dict, Union
 # from trustrag.modules.deepsearch.utils import logger
 import loguru
-from trustrag.modules.deepsearch.finder.searcher import SearchResult, SearchEngine, UnifiedSearchEngine
-from trustrag.modules.deepsearch.finder.scraper import ScrapedContent, Scraper, PlaywrightScraper
+from trustrag.modules.deepresearch.finder.searcher import SearchResult, SearchEngine, UnifiedSearchEngine
+from trustrag.modules.deepresearch.finder.scraper import ScrapedContent, Scraper, PlaywrightScraper
 
 
 class SearchAndScrapeManager:

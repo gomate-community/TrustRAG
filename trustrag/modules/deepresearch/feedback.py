@@ -2,7 +2,7 @@ from typing import List
 import openai
 import json
 from trustrag.modules.prompt.templates import DEEPSEARCH_SYSTEM_PROMPT
-from trustrag.modules.deepsearch.agent.providers import get_client_response
+from trustrag.modules.deepresearch.agent.providers import get_client_response
 
 
 async def generate_feedback(query: str, client: openai.OpenAI, model: str) -> List[str]:

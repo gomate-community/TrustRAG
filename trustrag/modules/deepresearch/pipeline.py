@@ -46,10 +46,10 @@ from rich.panel import Panel
 from rich.progress import Progress, SpinnerColumn, TextColumn
 from rich import print as rprint
 
-from trustrag.modules.deepsearch.action import deep_research, write_final_report
-from trustrag.modules.deepsearch.feedback import generate_feedback
-from trustrag.modules.deepsearch.agent.providers import AIClientFactory
-from trustrag.modules.deepsearch.config import EnvironmentConfig
+from trustrag.modules.deepresearch.action import deep_research, write_final_report
+from trustrag.modules.deepresearch.feedback import generate_feedback
+from trustrag.modules.deepresearch.agent.providers import AIClientFactory
+from trustrag.modules.deepresearch.config import EnvironmentConfig
 
 
 

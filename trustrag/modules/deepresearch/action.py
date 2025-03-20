@@ -6,8 +6,8 @@ from typing import List, Dict, TypedDict, Optional
 import loguru
 import openai
 
-from trustrag.modules.deepsearch.agent.providers import trim_prompt, get_client_response
-from trustrag.modules.deepsearch.finder.services import search_service
+from trustrag.modules.deepresearch.agent.providers import trim_prompt, get_client_response
+from trustrag.modules.deepresearch.finder.services import search_service
 from trustrag.modules.prompt.templates import DEEPSEARCH_SYSTEM_PROMPT
 
 
