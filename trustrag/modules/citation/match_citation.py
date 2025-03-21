@@ -3,6 +3,7 @@ from typing import List
 
 import jieba
 import loguru
+import re
 
 from trustrag.modules.document.utils import PROJECT_BASE
 
@@ -230,6 +231,61 @@ class MatchCitation:
         loguru.logger.info(f"Parameters saved to {output_file}")
         # print(json_data)
         return data
+
+    def find_citations(self, response: str = None):
+        """
+        为兼容现有代码添加的方法，返回引用信息
+        识别引用格式如 [数字] 的内容
+        """
+        citation_pattern = r'\[(\d+)\]'
+        citations = []
+
+        for match in re.finditer(citation_pattern, response):
+            start, end = match.span()
+            index = int(match.group(1))
+            citations.append({
+                "position": start,
+                "citation": match.group(0),
+                "index": index
+            })
+
+        # 将内容解析为所需格式
+        parsed_result = []
+        last_position = 0
+
+        for citation in citations:
+            # 添加引用前的文本
+            if citation["position"] > last_position:
+                text_content = response[last_position:citation["position"]]
+                if text_content:
+                    parsed_result.append({
+                        "content": text_content,
+                        "type": "text"
+                    })
+
+            # 添加引用
+            parsed_result.append({
+                "content": citation["citation"],
+                "type": "citation",
+                "index": citation["index"]
+            })
+
+            last_position = citation["position"] + len(citation["citation"])
+
+        # 添加最后一个引用后的剩余文本
+        if last_position < len(response):
+            parsed_result.append({
+                "content": response[last_position:],
+                "type": "text"
+            })
+
+        return {
+            "citations": citations,
+            "parsed_result": parsed_result
+        }
+        
+    # 添加extract_citations作为find_citations的别名，以兼容app_fixed.py中的调用
+    extract_citations = find_citations
 
 
 if __name__ == '__main__':
