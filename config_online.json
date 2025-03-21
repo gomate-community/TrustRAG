@@ -5,6 +5,11 @@
             "api_key": "sk-xx",
             "description": "DMX API 服务"
         },
+        "siliconflow": {
+            "base_url": "https://api.siliconflow.cn/v1",
+            "api_key": "sk-yfgjndsavpwcnnedlhllyfunxwsckfguirokexokstbvwnjf",
+            "description": "SiliconFlow API 服务"
+        },
         "rerank": {
             "base_url": "http://localhost:3600",
             "api_key": "sk-xxx",
@@ -16,6 +21,11 @@
             "name": "gpt-4o-all",
             "service": "dmx",
             "description": "主要的 LLM 模型"
+        },
+        "deepseek_r1": {
+            "name": "deepseek-ai/DeepSeek-R1",
+            "service": "siliconflow",
+            "description": "DeepSeek-R1 模型"
         },
         "embedding": {
             "name": "text-embedding-3-large",
