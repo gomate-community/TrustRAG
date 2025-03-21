@@ -1,0 +1,1 @@
+docker run --name xinference -d -p 9997:9997 -e XINFERENCE_HOME=/data -v $(pwd):/data --gpus all xprobe/xinference:latest xinference-local -H 0.0.0.0

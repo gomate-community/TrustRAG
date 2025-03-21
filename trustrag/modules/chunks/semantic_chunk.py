@@ -1,10 +1,10 @@
 import re
-import numpy as np
 from sklearn.metrics.pairwise import cosine_similarity
 from trustrag.modules.document import rag_tokenizer
 from trustrag.modules.chunks.base import BaseChunker
 from sentence_transformers import SentenceTransformer
 from langchain.embeddings import OpenAIEmbeddings
+from langchain_experimental.text_splitter import SemanticChunker
 
 class SemanticChunker(BaseChunker):
     """
@@ -136,7 +136,7 @@ class SemanticChunker(BaseChunker):
 
         # Determine breakpoints based on the similarity threshold
         breakpoint_indices = [i for i, distance in enumerate(distances) if distance > (1 - self.similarity_threshold)]
-
+        print(breakpoint_indices)
         # Combine sentences into chunks
         chunks = []
         start_index = 0
@@ -181,7 +181,7 @@ class SemanticChunker(BaseChunker):
         return processed_chunks
 
 if __name__ == '__main__':
-    with open("../../../data/docs/news.txt", "r", encoding="utf-8") as f:
+    with open("../../../data/docs/伊朗总统罹难事件.txt", "r", encoding="utf-8") as f:
         content = f.read()
 
     # Example 1: Use SentenceTransformer

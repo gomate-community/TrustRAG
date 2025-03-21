@@ -254,9 +254,9 @@ bge_reranker = BgeReranker(reranker_config)
 <summary>PointWise-Rerank</summary>
 We have two pointwise methods so far:
 
-`relevance generation`: LLMs are prompted to judge whether the given query and document are relevant. Candidate documents are reranked based on the likelihood of generating a "yes" response by LLMs. It is the rerank method used in (https://arxiv.org/pdf/2211.09110).
+`relevance generation`: LLMs are prompted to judge whether the given query and document are relevant. Candidate documents are reranked based on the likelihood of generating a "yes" response by LLMs. It is the rerank method used in [Holistic Evaluation of Language Models](https://arxiv.org/pdf/2211.09110).
 
-`query generation`: LLMs are prompted to generate a pseudo-query based on the given document. Candidate documents are reranked based on the likelihood of generating the target query by LLMs. It is the rerank method used in (https://arxiv.org/pdf/2204.07496).
+`query generation`: LLMs are prompted to generate a pseudo-query based on the given document. Candidate documents are reranked based on the likelihood of generating the target query by LLMs. It is the rerank method used in [Improving Passage Retrieval with Zero-Shot Question Generation](https://arxiv.org/pdf/2204.07496).
 
 We have implemented [flan-t5](https://huggingface.co/docs/transformers/model_doc/flan-t5) as our pointwise reranker model.
 ```python
@@ -270,7 +270,19 @@ llm_reranker = PointWiseReranker(reranker_config)
 
 <details>
 <summary>PairWise-Rerank</summary>
-Waiting to implement...
+We have two pairwise method so far:
+
+`allpair`: LLMs are prompted to judge which document is the more relevant to the given query than the other. Candidate documents are based on the number of that they win. It is the rerank method used in [Large Language Models are Effective Text Rankers with Pairwise Ranking Prompting](https://arxiv.org/pdf/2306.17563).
+
+`bubblesort`: LLMs are prompted to judge which document is the more relevant to the given query than the other. Candidate documents are reranked using bubblesort algorithm. It is the other rerank method used in [Large Language Models are Effective Text Rankers with Pairwise Ranking Prompting](https://arxiv.org/pdf/2306.17563).
+
+```python
+from trustrag.modules.reranker.llm_reranker import LLMRerankerConfig, PairWiseReranker
+reranker_config = LLMRerankerConfig(
+    model_name_or_path="qwen2-7B-instruct"
+)
+llm_reranker = PairWiseReranker(reranker_config)
+```
 </details>
 
 <details>
