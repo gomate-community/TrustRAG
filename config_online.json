@@ -7,7 +7,7 @@
         },
         "siliconflow": {
             "base_url": "https://api.siliconflow.cn/v1",
-            "api_key": "sk-yfgjndsavpwcnnedlhllyfunxwsckfguirokexokstbvwnjf",
+            "api_key": "sk-xxxx",
             "description": "SiliconFlow API 服务"
         },
         "rerank": {

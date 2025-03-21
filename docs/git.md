@@ -1,7 +1,7 @@
 ## git常见命令
 - 合并分支
 ```bash
-git pull main
+git pull origin main
 git merge main
 ```
 
