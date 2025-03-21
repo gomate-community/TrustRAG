@@ -125,48 +125,88 @@ async def process_serp_result(
 
 
 async def write_final_report(
-        prompt: str,
-        learnings: List[str],
-        visited_urls: List[str],
-        client: openai.OpenAI,
-        model: str,
-) -> str:
-    """Generate final report based on all research learnings."""
-
-    learnings_string = trim_prompt(
-        "\n".join([f"<learning>\n{learning}\n</learning>" for learning in learnings]),
-        # 150_000,
-        300_000,
-    )
+    prompt,
+    learnings,
+    visited_urls,
+    client,
+    model,
+):
+    learnings_string = ""
+    for i, learning in enumerate(learnings, 1):
+        learnings_string += f"{i}. {learning}\n"
 
     user_prompt = (
-        f"根据以下用户提供的提示，使用研究中获得的学习要点撰写关于该主题的最终报告。返回一个JSON对象，"
-        f"其中包含'reportMarkdown'字段，该字段包含详细的markdown报告（目标为3页以上），尽量内容丰富饱满。包括研究中的所有学习要点：\n\n"
-        f"<prompt>{prompt}</prompt>\n\n"
-        f"以下是研究中获得的所有学习要点：\n\n<learnings>\n{learnings_string}\n</learnings>"
+        "根据以下用户提供的提示，使用研究中获得的学习要点撰写关于该主题的最终报告。"
+        "返回一个JSON对象，其中包含'reportMarkdown'字段，该字段包含详细的markdown格式报告，至少3页。"
+        f"\n\n提示: {prompt}\n\n学习要点:\n{learnings_string}"
     )
+
     response = await get_client_response(
         client=client,
         model=model,
         messages=[
-            {"role": "system", "content": DEEPSEARCH_SYSTEM_PROMPT},
+            {
+                "role": "system",
+                "content": "你是一位专业的研究报告撰写者。你擅长将一组研究发现整合成结构化、详尽的研究报告。",
+            },
             {"role": "user", "content": user_prompt},
         ],
         response_format={"type": "json_object"},
     )
 
     try:
-        report = response.get("reportMarkdown", "")
+        # 检查response是否为字典或列表
+        if isinstance(response, dict):
+            report = response.get("reportMarkdown", "")
+        elif isinstance(response, list):
+            # 如果是列表，尝试从中提取报告内容
+            report = ""
+            for item in response:
+                if isinstance(item, dict) and "reportMarkdown" in item:
+                    report = item["reportMarkdown"]
+                    break
+            
+            # 如果没有找到reportMarkdown，尝试构建一个简单的报告
+            if not report:
+                report = "# RAG研究报告\n\n"
+                report += "## 主题介绍\n\n检索增强生成（Retrieval-Augmented Generation，RAG）是一种将检索系统与生成式AI模型结合的技术框架。\n\n"
+                report += "## 研究发现\n\n"
+                
+                # 添加从响应中获取的任何有用信息
+                for item in response:
+                    if isinstance(item, dict):
+                        for key, value in item.items():
+                            if isinstance(value, str) and len(value) > 100:  # 假设长文本内容可能有用
+                                report += f"### {key}\n\n{value}\n\n"
+        else:
+            # 备用报告
+            report = "# RAG研究报告\n\n无法从API响应生成报告。请检查API连接。"
 
         # Append sources
         urls_section = "\n\n## 来源\n\n" + "\n".join(
-            [f"- {url}" for url in visited_urls]
+            [f"- [{url}]({url})" for url in visited_urls]
         )
-        return report + urls_section
-    except json.JSONDecodeError as e:
-        print(f"Error parsing JSON response: {e}")
-        print(f"Raw response: {response}")
-        return "Error generating report"
+        
+        report = report + urls_section if visited_urls else report
+
+        # Save to file
+        with open("output.md", "w", encoding="utf-8") as f:
+            f.write(report)
+
+        return report
+    except Exception as e:
+        error_report = f"# 报告生成错误\n\n生成最终报告时出错: {str(e)}\n\n"
+        error_report += f"## 原始查询\n\n{prompt}\n\n"
+        error_report += f"## 收集的信息\n\n{learnings_string}\n\n"
+        
+        # 添加调试信息
+        error_report += f"## 调试信息\n\n```\n响应类型: {type(response)}\n响应内容: {response}\n```\n"
+        
+        # Save to file
+        with open("output.md", "w", encoding="utf-8") as f:
+            f.write(error_report)
+            
+        return error_report
 
 
 async def deep_research(

@@ -8,12 +8,14 @@ from rich.console import Console
 DEFAULT_OPENAI_MODEL = "gpt-4o-mini"
 DEFAULT_DEEPSEEK_MODEL = "deepseek-chat"
 DEFAULT_OLLAMA_MODEL = None
+DEFAULT_SILICONFLOW_MODEL = "deepseek-ai/DeepSeek-R1"
 
 
 class ServiceProvider(Enum):
     OLLAMA = "ollama"
     OPENAI = "openai"
     DEEPSEEK = "deepseek"
+    SILICONFLOW = "siliconflow"
 
 
 @dataclass
@@ -78,6 +80,14 @@ class EnvironmentConfig:
             url_env_var="OLLAMA_HOST_ENDPOINT",
             default_model=DEFAULT_OLLAMA_MODEL,
             model_env_var="OLLAMA_MODEL",
+        ),
+        ServiceProvider.SILICONFLOW.value: ProviderConfig(
+            service_provider_name=ServiceProvider.SILICONFLOW.value,
+            api_key_env="SILICONFLOW_API_KEY",
+            default_url="https://api.siliconflow.cn/v1",
+            url_env_var="SILICONFLOW_ENDPOINT",
+            default_model=DEFAULT_SILICONFLOW_MODEL,
+            model_env_var="SILICONFLOW_MODEL",
         ),
     }
 

@@ -295,6 +295,23 @@ def predict(question,
     loguru.logger.info("User Question：" + question)
     if history is None:
         history = []
+    
+    # 根据选择的模型设置API配置
+    if large_language_model == "DeepSeek-R1":
+        # 使用SiliconFlow API
+        siliconflow_service = config.get_config('services.siliconflow')
+        model_config = config.get_config('models.deepseek_r1')
+        application.llm.base_url = siliconflow_service['base_url']
+        application.llm.api_key = siliconflow_service['api_key']
+        application.llm.model_name = model_config['name']
+    else:
+        # 使用默认DMX API
+        dmx_service = config.get_config('services.dmx')
+        model_config = config.get_config('models.llm')
+        application.llm.base_url = dmx_service['base_url']
+        application.llm.api_key = dmx_service['api_key']
+        application.llm.model_name = model_config['name']
+    
     # Handle web content
     web_content = ''
     if use_web == 'Use':
@@ -493,6 +510,7 @@ with gr.Blocks(theme="soft") as demo:
                 large_language_model = gr.Dropdown(
                     choices=[
                         "GPT-4O-ALL",
+                        "DeepSeek-R1",
                     ],
                     label="Large Language model",
                     value="GPT-4O-ALL"
