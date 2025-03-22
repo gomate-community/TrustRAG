@@ -80,3 +80,4 @@
 
 ### 参考资料
 [RAG中常见的chunk切分方法](https://www.ctyun.cn/developer/article/551915360890949)
+[Meta-Chunking](https://github.com/IAAR-Shanghai/Meta-Chunking#/)

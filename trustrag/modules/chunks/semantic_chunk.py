@@ -1,197 +1,242 @@
-import re
-from sklearn.metrics.pairwise import cosine_similarity
-from trustrag.modules.document import rag_tokenizer
+from typing import List, Dict, Any, Union, Optional
+import numpy as np
 from trustrag.modules.chunks.base import BaseChunker
-from sentence_transformers import SentenceTransformer
-from langchain.embeddings import OpenAIEmbeddings
-from langchain_experimental.text_splitter import SemanticChunker
+from trustrag.modules.retrieval.embedding import EmbeddingGenerator
+
 
 class SemanticChunker(BaseChunker):
     """
-    A class for splitting text into chunks based on semantic similarity between sentences.
+    A class for semantically chunking text based on sentence embeddings.
 
-    This class uses sentence embeddings to calculate the semantic similarity between sentences
-    and groups them into chunks based on a similarity threshold. It ensures that each chunk
-    contains semantically related sentences.
-
-    Attributes:
-        tokenizer (callable): A tokenizer function used to count tokens in sentences.
-        chunk_size (int): The maximum number of tokens allowed per chunk.
-        similarity_threshold (float): The threshold for semantic similarity to group sentences.
-        embeddings_model: The embedding model used to generate sentence embeddings.
-                          Can be either OpenAIEmbeddings or SentenceTransformer.
+    This chunker uses semantic similarity between consecutive sentences to identify
+    natural breakpoints in the text, creating chunks that maintain semantic coherence.
+    It supports multiple methods for determining where to break text into chunks based on
+    similarity thresholds.
     """
 
-    def __init__(self, chunk_size=512, similarity_threshold=0.8, embedding_model="sentence-transformers", model_name="all-MiniLM-L6-v2"):
+    def __init__(self, embedding_generator: EmbeddingGenerator):
         """
-        Initializes the SemanticChunker with a tokenizer, chunk size, similarity threshold, and embedding model.
+        Initialize the SemanticChunker.
 
         Args:
-            chunk_size (int, optional): The maximum number of tokens allowed per chunk. Defaults to 512.
-            similarity_threshold (float, optional): The threshold for semantic similarity to group sentences. Defaults to 0.8.
-            embedding_model (str, optional): The embedding model to use. Options: "sentence-transformers" or "openai". Defaults to "sentence-transformers".
-            model_name (str, optional): The name of the model to use. For "sentence-transformers", it's the model name (e.g., "all-MiniLM-L6-v2").
-                                        For "openai", it's the model name (e.g., "text-embedding-ada-002"). Defaults to "all-MiniLM-L6-v2".
+            embedding_generator (EmbeddingGenerator): An implementation of EmbeddingGenerator
+                to generate embeddings for sentences.
         """
         super().__init__()
-        self.tokenizer = rag_tokenizer
-        self.chunk_size = chunk_size
-        self.similarity_threshold = similarity_threshold
+        self.embedding_generator = embedding_generator
+        self.results = None
 
-        if embedding_model == "sentence-transformers":
-            self.embeddings_model = SentenceTransformer(model_name)
-        elif embedding_model == "openai":
-            self.embeddings_model = OpenAIEmbeddings(model=model_name)
+    def compute_breakpoints(
+            self,
+            similarities: List[float],
+            method: str = "percentile",
+            threshold: float = 90
+    ) -> List[int]:
+        """
+        Computes chunking breakpoints based on similarity drops between consecutive sentences.
+
+        Args:
+            similarities: List of similarity scores between consecutive sentences.
+            method: Method to determine breakpoints, options:
+                - 'percentile': Breaks at points below a percentile threshold.
+                - 'standard_deviation': Breaks at points below mean - (threshold * std_dev).
+                - 'interquartile': Breaks at points below Q1 - 1.5 * IQR.
+            threshold: Threshold value, meaning depends on the method:
+                - For 'percentile': The percentile below which to break (0-100).
+                - For 'standard_deviation': Number of standard deviations below mean.
+                - For 'interquartile': Not used directly, fixed at 1.5 * IQR.
+
+        Returns:
+            List of indices where chunk splits should occur.
+
+        Raises:
+            ValueError: If an invalid method is provided.
+        """
+        if not similarities:
+            return []
+
+        # Determine threshold based on selected method
+        if method == "percentile":
+            # Calculate X percentile of similarity scores
+            threshold_value = np.percentile(similarities, threshold)
+        elif method == "standard_deviation":
+            # Calculate mean and standard deviation of similarity scores
+            mean = np.mean(similarities)
+            std_dev = np.std(similarities)
+            # Set threshold as mean minus X standard deviations
+            threshold_value = mean - (threshold * std_dev)
+        elif method == "interquartile":
+            # Calculate first and third quartiles (Q1 and Q3)
+            q1, q3 = np.percentile(similarities, [25, 75])
+            # Set threshold using IQR rule for outliers
+            threshold_value = q1 - 1.5 * (q3 - q1)
         else:
-            raise ValueError("Invalid embedding_model. Choose 'sentence-transformers' or 'openai'.")
+            # Raise error if invalid method is provided
+            raise ValueError("Invalid method. Choose 'percentile', 'standard_deviation', or 'interquartile'.")
 
-    def split_sentences(self, text: str) -> list[str]:
+        # Return indices where similarity is below threshold
+        return [i for i, sim in enumerate(similarities) if sim < threshold_value]
+
+    def split_into_chunks(self, sentences: List[str], breakpoints: List[int]) -> List[str]:
         """
-        Splits the input text into sentences based on Chinese and English punctuation marks.
+        Splits sentences into semantic chunks based on the identified breakpoints.
 
         Args:
-            text (str): The input text to be split into sentences.
+            sentences: List of sentences to be chunked.
+            breakpoints: Indices where chunking should occur.
 
         Returns:
-            list[str]: A list of sentences extracted from the input text.
+            List of text chunks, with sentences joined by periods.
         """
-        # Use regex to split text by sentence-ending punctuation marks
-        sentence_endings = re.compile(r'([。！？.!?])')
-        sentences = sentence_endings.split(text)
+        if not sentences:
+            return []
 
-        # Merge punctuation marks with their preceding sentences
-        result = []
-        for i in range(0, len(sentences) - 1, 2):
-            if sentences[i]:
-                result.append(sentences[i] + sentences[i + 1])
+        if not breakpoints:
+            return [". ".join(sentences) + "."]
 
-        # Handle the last sentence if it lacks punctuation
-        if sentences[-1]:
-            result.append(sentences[-1])
-
-        # Remove whitespace and filter out empty sentences
-        result = [sentence.strip() for sentence in result if sentence.strip()]
-
-        return result
-
-    def get_sentence_embeddings(self, sentences: list[str]) -> list[list[float]]:
-        """
-        Generates embeddings for a list of sentences using the selected embedding model.
-
-        Args:
-            sentences (list[str]): A list of sentences to generate embeddings for.
-
-        Returns:
-            list[list[float]]: A list of sentence embeddings.
-        """
-        if isinstance(self.embeddings_model, SentenceTransformer):
-            return self.embeddings_model.encode(sentences)
-        elif isinstance(self.embeddings_model, OpenAIEmbeddings):
-            return self.embeddings_model.embed_documents(sentences)
-        else:
-            raise ValueError("Unsupported embedding model.")
-
-    def calculate_cosine_distances(self, embeddings: list[list[float]]) -> list[float]:
-        """
-        Calculates the cosine distances between consecutive sentence embeddings.
-
-        Args:
-            embeddings (list[list[float]]): A list of sentence embeddings.
-
-        Returns:
-            list[float]: A list of cosine distances between consecutive sentences.
-        """
-        distances = []
-        for i in range(len(embeddings) - 1):
-            similarity = cosine_similarity([embeddings[i]], [embeddings[i + 1]])[0][0]
-            distance = 1 - similarity
-            distances.append(distance)
-        return distances
-
-    def get_chunks(self, paragraphs: list[str]) -> list[str]:
-        """
-        Splits a list of paragraphs into chunks based on semantic similarity and token size.
-
-        Args:
-            paragraphs (list[str]|str): A list of paragraphs to be chunked.
-
-        Returns:
-            list[str]: A list of text chunks, each containing semantically related sentences.
-        """
-        # Combine paragraphs into a single text
-        text = ''.join(paragraphs)
-
-        # Split the text into sentences
-        sentences = self.split_sentences(text)
-
-        # If no sentences are found, treat paragraphs as sentences
-        if len(sentences) == 0:
-            sentences = paragraphs
-
-        # Generate embeddings for sentences
-        embeddings = self.get_sentence_embeddings(sentences)
-
-        # Calculate cosine distances between consecutive sentences
-        distances = self.calculate_cosine_distances(embeddings)
-
-        # Determine breakpoints based on the similarity threshold
-        breakpoint_indices = [i for i, distance in enumerate(distances) if distance > (1 - self.similarity_threshold)]
-        print(breakpoint_indices)
-        # Combine sentences into chunks
         chunks = []
-        start_index = 0
-        for index in breakpoint_indices:
-            end_index = index
-            group = sentences[start_index:end_index + 1]
-            combined_text = ' '.join(group)
-            chunks.append(combined_text)
-            start_index = index + 1
+        start = 0
 
-        # Add the last chunk if it contains any sentences
-        if start_index < len(sentences):
-            combined_text = ' '.join(sentences[start_index:])
-            chunks.append(combined_text)
+        # Ensure breakpoints are in ascending order
+        sorted_breakpoints = sorted(breakpoints)
 
-        # Preprocess the chunks to normalize formatting
-        chunks = self.process_text_chunks(chunks)
+        # Create chunks using the breakpoints
+        for bp in sorted_breakpoints:
+            if bp < len(sentences) - 1:  # Ensure breakpoint is valid
+                chunks.append(". ".join(sentences[start:bp + 1]) + ".")
+                start = bp + 1
+
+        # Add remaining sentences as the last chunk
+        if start < len(sentences):
+            chunks.append(". ".join(sentences[start:]) + ".")
+
         return chunks
 
-    def process_text_chunks(self, chunks: list[str]) -> list[str]:
+    def get_chunks(
+            self,
+            text: str,
+            chunk_method: str = "percentile",
+            threshold: float = 90
+    ) -> List[str]:
         """
-        Preprocesses text chunks by normalizing excessive newlines and spaces.
+        Process a text string and split it into semantic chunks.
 
         Args:
-            chunks (list[str]): A list of text chunks to be processed.
+            text (str): Input text to process.
+            chunk_method (str): Method for determining breakpoints:
+                - 'percentile': Use percentile-based thresholding.
+                - 'standard_deviation': Use standard deviation-based thresholding.
+                - 'interquartile': Use interquartile range for thresholding.
+            threshold (float): Threshold value for the chosen method.
 
         Returns:
-            list[str]: A list of processed text chunks with normalized formatting.
+            List[str]: List of text chunks.
         """
-        processed_chunks = []
-        for chunk in chunks:
-            # Normalize four or more consecutive newlines
-            while '\n\n\n\n' in chunk:
-                chunk = chunk.replace('\n\n\n\n', '\n\n')
+        # Split the text into sentences
+        sentences = text.split(". ")
+        sentences = [s.strip() for s in sentences if s.strip()]
 
-            # Normalize four or more consecutive spaces
-            while '    ' in chunk:
-                chunk = chunk.replace('    ', '  ')
+        if len(sentences) <= 1:
+            return [text]
 
-            processed_chunks.append(chunk)
+        # Generate embeddings for each sentence
+        embeddings = self.embedding_generator.generate_embeddings(sentences)
 
-        return processed_chunks
+        # Compute similarity between consecutive sentences
+        similarities = [
+            self.embedding_generator.cosine_similarity(embeddings[i], embeddings[i + 1])
+            for i in range(len(embeddings) - 1)
+        ]
 
-if __name__ == '__main__':
-    with open("../../../data/docs/伊朗总统罹难事件.txt", "r", encoding="utf-8") as f:
-        content = f.read()
+        # Compute breakpoints using the specified method
+        breakpoints = self.compute_breakpoints(
+            similarities, method=chunk_method, threshold=threshold
+        )
 
-    # Example 1: Use SentenceTransformer
-    sc_st = SemanticChunker(embedding_model="sentence-transformers", model_name="all-MiniLM-L6-v2")
-    chunks_st = sc_st.get_chunks([content])
-    for chunk in chunks_st:
-        print(f"SentenceTransformer Chunk:\n{chunk}")
+        # Split the text into chunks based on the breakpoints
+        chunks = self.split_into_chunks(sentences, breakpoints)
 
-    # # Example 2: Use OpenAIEmbeddings
-    # sc_openai = SemanticChunker(embedding_model="openai", model_name="text-embedding-ada-002")
-    # chunks_openai = sc_openai.get_chunks([content])
-    # for chunk in chunks_openai:
-    #     print(f"OpenAIEmbeddings Chunk:\n{chunk}")
+        # Store the results for later reference
+        self.results = {
+            "sentences": sentences,
+            "chunks": chunks,
+            "num_chunks": len(chunks),
+            "breakpoints": breakpoints,
+            "similarities": similarities
+        }
+
+        return chunks
+
+    def get_results(self) -> Dict[str, Any]:
+        """
+        Get the results of the last chunking operation.
+
+        Returns:
+            A dictionary containing chunking results or None if no chunking has been performed.
+            The dictionary includes:
+            - sentences: The original list of sentences
+            - chunks: The resulting text chunks
+            - num_chunks: Number of chunks created
+            - breakpoints: Indices where text was split
+            - similarities: Similarity scores between consecutive sentences
+        """
+        return self.results
+
+
+class SentenceTransformerEmbedding(EmbeddingGenerator):
+    """
+    Embedding generator using Sentence Transformers models.
+
+    This class implements the EmbeddingGenerator interface using the sentence-transformers
+    library to generate sentence embeddings.
+    """
+
+    def __init__(
+            self,
+            model_name_or_path: str = "sentence-transformers/multi-qa-mpnet-base-cos-v1",
+            device: Optional[str] = None
+    ):
+        """
+        Initialize the SentenceTransformerEmbedding.
+
+        Args:
+            model_name_or_path (str): The name or path of the sentence-transformers model.
+                Default is "sentence-transformers/multi-qa-mpnet-base-cos-v1".
+            device (Optional[str]): The device to use for computation ('cuda', 'cpu').
+                If None, automatically uses CUDA if available.
+        """
+        import torch
+        from sentence_transformers import SentenceTransformer
+
+        self.device = device or ("cuda" if torch.cuda.is_available() else "cpu")
+        self.model = SentenceTransformer(model_name_or_path, device=self.device)
+        self.embedding_size = self.model.get_sentence_embedding_dimension()
+
+    def generate_embeddings(self, texts: List[str]) -> np.ndarray:
+        """
+        Generate embeddings for a list of texts.
+
+        Args:
+            texts (List[str]): A list of text strings to encode.
+
+        Returns:
+            np.ndarray: A 2D numpy array of shape (len(texts), embedding_size)
+                containing the embeddings for each text.
+        """
+        return self.model.encode(texts, show_progress_bar=False)
+
+    def cosine_similarity(self, embedding1: np.ndarray, embedding2: np.ndarray) -> float:
+        """
+        Calculate cosine similarity between two embeddings.
+
+        Args:
+            embedding1 (np.ndarray): First embedding vector.
+            embedding2 (np.ndarray): Second embedding vector.
+
+        Returns:
+            float: Cosine similarity value between the two embeddings (-1 to 1).
+        """
+        from numpy.linalg import norm
+
+        # Calculate cosine similarity
+        return np.dot(embedding1, embedding2) / (norm(embedding1) * norm(embedding2))
