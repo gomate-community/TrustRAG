@@ -1,5 +1,6 @@
+from typing import List, Union
 from trustrag.modules.chunks.base import BaseChunker
-from typing import List
+
 
 class CharChunker(BaseChunker):
     """
@@ -9,38 +10,43 @@ class CharChunker(BaseChunker):
     input texts into smaller chunks, where each chunk contains a specified number of characters.
     This is useful for processing long texts in smaller, manageable pieces.
 
-    Attributes:
-        chunk_size (int): The number of characters per chunk. Defaults to 64.
     """
 
-    def __init__(self, chunk_size: int = 64) -> None:
+    def __init__(self) -> None:
         """
         Initializes the CharChunker with a specified chunk size.
 
-        Args:
-            chunk_size (int): The number of characters per chunk. Defaults to 64.
         """
         super().__init__()
-        self.chunk_size = chunk_size
 
-    def get_chunks(self, paragraphs: List[str]) -> List[str]:
+    def get_chunks(self, paragraphs: Union[str, List[str]], chunk_size: int = 64) -> List[str]:
         """
         Splits the input paragraphs into chunks of characters based on the specified chunk size.
 
         Args:
-            paragraphs (List[str]): A list of strings (paragraph) to be chunked.
+            paragraphs (Union[str, List[str]]): A string or a list of strings (paragraphs) to be chunked.
+            chunk_size (int): The size of each chunk.
 
         Returns:
             List[str]: A list of chunks, where each chunk is a string of characters.
+
+        Raises:
+            ValueError: If chunk_size is not a positive integer.
+            TypeError: If paragraphs is not a string or a list of strings.
         """
-        chunks = []
-        for paragraph in paragraphs:
-            for i in range(0, len(paragraph), self.chunk_size):
-                chunk = paragraph[i:i + self.chunk_size]
-                chunks.append(chunk)
+        # check input valid
+        paragraphs=self.check_validation(paragraphs=paragraphs, chunk_size=chunk_size)
+        # use list comprehension to optimize performance
+        chunks = [
+            paragraph[i:i + chunk_size]
+            for paragraph in paragraphs
+            for i in range(0, len(paragraph), chunk_size)
+        ]
         return chunks
 
-
 if __name__ == "__main__":
-    cc = CharChunker(chunk_size=64)
-    print(cc.get_chunks(["我喜欢北京。"]))
+    cc = CharChunker()
+    with open("../../../data/docs/伊朗总统罹难事件.txt","r",encoding="utf-8") as f:
+        content=f.read()
+    print(cc.get_chunks([content],chunk_size=128))
+    print(cc.get_chunks(content,chunk_size=128))
