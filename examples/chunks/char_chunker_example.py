@@ -1,11 +1,10 @@
 from trustrag.modules.chunks.char_chunk import CharChunker
 
 if __name__ == '__main__':
-    with open("../../data/docs/news.txt","r",encoding="utf-8") as f:
+    with open("../../data/docs/bbc新闻.txt","r",encoding="utf-8") as f:
         content=f.read()
-    print(content)
 
-    cc=CharChunker(chunk_size=64)
+    cc=CharChunker()
 
-    chunks=cc.get_chunks([content])
+    chunks=cc.get_chunks([content],chunk_size=128)
     print(chunks)
