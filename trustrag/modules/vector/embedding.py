@@ -1,39 +1,22 @@
 import os
-from abc import ABC, abstractmethod
-from typing import List, Union, Optional
+from typing import List, Optional
 
 import numpy as np
-from openai import OpenAI
-from tenacity import retry, stop_after_attempt, wait_random_exponential
 import torch
-from transformers import AutoModel, AutoTokenizer
-from sentence_transformers import SentenceTransformer
 from FlagEmbedding import FlagAutoModel
+from openai import OpenAI
+from sentence_transformers import SentenceTransformer
+from tenacity import retry, stop_after_attempt, wait_random_exponential
+from transformers import AutoModel, AutoTokenizer
 
-
-class EmbeddingGenerator(ABC):
-    @abstractmethod
-    def generate_embeddings(self, texts: List[str]) -> np.ndarray:
-        """Generate embeddings for a list of texts."""
-        pass
-
-    def generate_embedding(self, text: str) -> np.ndarray:
-        """Generate embedding for a single text."""
-        return self.generate_embeddings([text])[0]
-
-    @staticmethod
-    def cosine_similarity(vector1: np.ndarray, vector2: np.ndarray) -> float:
-        """Calculate cosine similarity between two vectors."""
-        dot_product = np.dot(vector1, vector2)
-        magnitude = np.linalg.norm(vector1) * np.linalg.norm(vector2)
-        return 0 if not magnitude else dot_product / magnitude
+from trustrag.modules.vector.base import EmbeddingGenerator
 
 
 class OpenAIEmbedding(EmbeddingGenerator):
     def __init__(
             self,
-            api_key: str = None,
-            base_url: str = None,
+            api_key: Optional[str] = None,
+            base_url: Optional[str] = None,
             embedding_model_name: str = "text-embedding-3-large"
     ):
         self.client = OpenAI(
@@ -132,11 +115,11 @@ class DashscopeEmbedding(EmbeddingGenerator):
 
 class FlagModelEmbedding(EmbeddingGenerator):
     def __init__(
-        self,
-        model_name: str = "BAAI/bge-base-en-v1.5",
-        query_instruction: Optional[str] = "Represent this sentence for searching relevant passages:",
-        use_fp16: bool = True,
-        device: str = None
+            self,
+            model_name: str = "BAAI/bge-base-en-v1.5",
+            query_instruction: Optional[str] = "Represent this sentence for searching relevant passages:",
+            use_fp16: bool = True,
+            device: str = None
     ):
         """
         Initialize FlagModel embedding generator.
@@ -182,3 +165,89 @@ class FlagModelEmbedding(EmbeddingGenerator):
             np.ndarray: Similarity matrix
         """
         return embeddings1 @ embeddings2.T
+
+
+class EmbeddingFactory:
+    """
+    工厂类，用于创建和管理不同类型的嵌入生成器。
+    支持OpenAI、SentenceTransformer、HuggingFace、Zhipu、Dashscope和FlagModel等多种嵌入模型。
+    """
+
+    @staticmethod
+    def create_embedding_generator(
+            embedding_type: str,
+            **kwargs
+    ) -> EmbeddingGenerator:
+        """
+        根据指定的嵌入类型创建相应的嵌入生成器实例。
+
+        Args:
+            embedding_type (str): 嵌入生成器类型，可选值包括：
+                                 'openai', 'sentence_transformer', 'huggingface',
+                                 'zhipu', 'dashscope', 'flag_model'
+            **kwargs: 传递给具体嵌入生成器构造函数的参数
+
+        Returns:
+            EmbeddingGenerator: 创建的嵌入生成器实例
+
+        Raises:
+            ValueError: 当指定的嵌入类型不受支持时
+        """
+        embedding_type = embedding_type.lower()
+
+        if embedding_type == 'openai':
+            return OpenAIEmbedding(
+                api_key=kwargs.get('api_key'),
+                base_url=kwargs.get('base_url'),
+                embedding_model_name=kwargs.get('model_name', 'text-embedding-3-large')
+            )
+        elif embedding_type == 'sentence_transformer':
+            return SentenceTransformerEmbedding(
+                model_name_or_path=kwargs.get('model_name', 'sentence-transformers/multi-qa-mpnet-base-cos-v1'),
+                device=kwargs.get('device')
+            )
+        elif embedding_type == 'huggingface':
+            if 'model_name' not in kwargs:
+                raise ValueError("必须为HuggingFace嵌入提供'model_name'参数")
+            return HuggingFaceEmbedding(
+                model_name=kwargs['model_name'],
+                device=kwargs.get('device'),
+                trust_remote_code=kwargs.get('trust_remote_code', True)
+            )
+        elif embedding_type == 'zhipu':
+            return ZhipuEmbedding(
+                api_key=kwargs.get('api_key'),
+                model=kwargs.get('model_name', 'embedding-2')
+            )
+        elif embedding_type == 'dashscope':
+            return DashscopeEmbedding(
+                api_key=kwargs.get('api_key'),
+                model=kwargs.get('model_name', 'text-embedding-v1')
+            )
+        elif embedding_type == 'flag_model':
+            return FlagModelEmbedding(
+                model_name=kwargs.get('model_name', 'BAAI/bge-base-en-v1.5'),
+                query_instruction=kwargs.get('query_instruction',
+                                             'Represent this sentence for searching relevant passages:'),
+                use_fp16=kwargs.get('use_fp16', True),
+                device=kwargs.get('device')
+            )
+        else:
+            raise ValueError(f"不支持的嵌入类型: {embedding_type}")
+
+    @staticmethod
+    def get_available_embedding_types() -> List[str]:
+        """
+        获取所有可用的嵌入类型。
+
+        Returns:
+            List[str]: 可用嵌入类型列表
+        """
+        return [
+            'openai',
+            'sentence_transformer',
+            'huggingface',
+            'zhipu',
+            'dashscope',
+            'flag_model'
+        ]

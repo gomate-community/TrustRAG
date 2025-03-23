@@ -129,6 +129,7 @@ class SentenceChunker(BaseChunker):
 
         Args:
             sentence: The sentence to be split.
+            chunk_size:
 
         Returns:
             A list of smaller sentence parts that fit within the token limit.

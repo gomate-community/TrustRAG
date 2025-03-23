@@ -15,7 +15,7 @@ import faiss
 from tqdm import tqdm
 from abc import ABC, abstractmethod
 from dataclasses import dataclass
-from trustrag.modules.retrieval.embedding import EmbeddingGenerator
+from trustrag.modules.vector.embedding import EmbeddingGenerator
 os.environ["KMP_DUPLICATE_LIB_OK"] = "TRUE"
 
 

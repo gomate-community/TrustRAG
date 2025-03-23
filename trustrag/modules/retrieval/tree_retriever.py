@@ -5,9 +5,9 @@ from typing import List
 import tiktoken
 
 from trustrag.modules.refiner.summary import GLMSummarizationModel
-from trustrag.modules.retrieval.embedding import BaseEmbeddingModel
-from trustrag.modules.retrieval.embedding import OpenAIEmbeddingModel
-from trustrag.modules.retrieval.embedding import SBertEmbedding
+from trustrag.modules.vector.embedding import BaseEmbeddingModel
+from trustrag.modules.vector.embedding import OpenAIEmbeddingModel
+from trustrag.modules.vector.embedding import SBertEmbedding
 from trustrag.modules.retrieval.raptor.cluster_tree_builder import ClusterTreeBuilder, ClusterTreeConfig
 from trustrag.modules.retrieval.raptor.tree_structures import Node, Tree
 from trustrag.modules.retrieval.base import BaseRetriever
