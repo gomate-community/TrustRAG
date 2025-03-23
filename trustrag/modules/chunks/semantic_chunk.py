@@ -3,7 +3,7 @@ import numpy as np
 import re
 from sklearn.metrics.pairwise import cosine_similarity
 from trustrag.modules.chunks.base import BaseChunker
-from trustrag.modules.retrieval.embedding import EmbeddingGenerator,SentenceTransformerEmbedding
+from trustrag.modules.vector.embedding import EmbeddingGenerator,SentenceTransformerEmbedding
 
 
 class SemanticChunker(BaseChunker):
