@@ -18,7 +18,7 @@ from trustrag.modules.generator.chat import OpenAIChat
 from trustrag.modules.prompt.templates import CHAT_PROMPT_TEMPLATES
 from trustrag.modules.judger.llm_judger import LLMJudger
 from trustrag.modules.retrieval.dense_retriever import DenseRetriever
-from trustrag.modules.retrieval.embedding import OpenAIEmbedding
+from trustrag.modules.vector.embedding import OpenAIEmbedding
 from trustrag.modules.retrieval.web_retriever import DuckduckSearcher
 from trustrag.modules.rewriter.llm_rewriter import LLMRewriter
 
