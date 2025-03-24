@@ -8,7 +8,7 @@ import loguru
 
 from trustrag.modules.engine.websearch import DuckduckEngine, SearxngEngine
 from trustrag.modules.engine.qdrant import QdrantEngine
-from trustrag.modules.retrieval.embedding import SentenceTransformerEmbedding
+from trustrag.modules.vector.embedding import SentenceTransformerEmbedding
 
 
 @dataclass

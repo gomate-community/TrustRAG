@@ -14,13 +14,13 @@ from trustrag.modules.citation.match_citation import MatchCitation
 from trustrag.modules.document.common_parser import CommonParser
 from trustrag.modules.generator.chat import DeepSeekChat
 from trustrag.modules.generator.chat import GptTurbo, GPT4_DMXAPI
-from trustrag.modules.generator.llm import PROMPT_TEMPLATE
+from trustrag.modules.prompt.templates import CHAT_PROMPT_TEMPLATES
 from trustrag.modules.rewriter.llm_rewriter import LLMRewriter
 from trustrag.modules.judger.llm_judger import LLMJudger
 from trustrag.modules.reranker.bge_reranker import BgeReranker
 from trustrag.modules.retrieval.dense_retriever import DenseRetriever
 from trustrag.modules.document.chunk import TextChunker
-from trustrag.modules.retrieval.embedding import FlagModelEmbedding
+from trustrag.modules.vector.embedding import FlagModelEmbedding
 from  trustrag.modules.retrieval.web_retriever import DuckduckSearcher
 from trustrag.modules.chunks.sentence_chunk import SentenceChunker
 
