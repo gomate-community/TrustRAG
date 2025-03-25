@@ -2,7 +2,7 @@ from typing import List, Dict, Any, Union
 import numpy as np
 import chromadb
 from chromadb.config import Settings
-from trustrag.modules.retrieval.embedding import EmbeddingGenerator
+from trustrag.modules.vector.embedding import EmbeddingGenerator
 
 
 class ChromaEngine:
