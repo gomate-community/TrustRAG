@@ -249,12 +249,81 @@ for result in results:
 ```
 
 ### 5 排序模型
+<details>
+<summary>Bge-Rerank</summary>
+
+我们使用 [bge-reranker](https://github.com/FlagOpen/FlagEmbedding)作为我们的基础重排序模型。
 ```python
+from trustrag.modules.reranker.bge_reranker import BgeReranker, BgeRerankerConfig
 reranker_config = BgeRerankerConfig(
-    model_name_or_path=reranker_model_path
+    model_name_or_path='llms/bge-reranker-large'
 )
 bge_reranker = BgeReranker(reranker_config)
 ```
+</details>
+
+<details>
+<summary>PointWise-Rerank</summary>
+我们目前实现了2种Pointwise排序方法:
+
+`相关性生成`: 提示LLMs判断给定查询和文档是否相关。基于LLMs生成"是"响应的可能性对候选文档进行重排序。该方法源于[Holistic Evaluation of Language Models](https://arxiv.org/pdf/2211.09110).
+
+`查询生成`: 提示LLMs根据给定文档生成伪查询。基于LLMs生成目标查询的可能性对候选文档进行重排序。该方法源于[Improving Passage Retrieval with Zero-Shot Question Generation](https://arxiv.org/pdf/2204.07496).
+
+我们已实现[flan-t5](https://huggingface.co/docs/transformers/model_doc/flan-t5)作为我们的Pointwise重排序模型。
+```python
+from trustrag.modules.reranker.llm_reranker import LLMRerankerConfig, PointWiseReranker
+reranker_config = LLMRerankerConfig(
+    model_name_or_path="flan-t5-small"
+)
+llm_reranker = PointWiseReranker(reranker_config)
+```
+</details>
+
+<details>
+<summary>PairWise-Rerank</summary>
+我们目前实现了2种Pairwise排序方法:
+
+`全排序`: 提示LLMs判断哪个文档比另一个文档与给定查询更相关。候选文档基于他们赢得的次数进行排序。该方法源于[Large Language Models are Effective Text Rankers with Pairwise Ranking Prompting](https://arxiv.org/pdf/2306.17563).
+
+`冒泡排序`: 提示LLMs判断哪个文档比另一个文档与给定查询更相关。候选文档使用冒泡排序算法重新排序。该方法源于[Large Language Models are Effective Text Rankers with Pairwise Ranking Prompting](https://arxiv.org/pdf/2306.17563).
+
+```python
+from trustrag.modules.reranker.llm_reranker import LLMRerankerConfig, PairWiseReranker
+reranker_config = LLMRerankerConfig(
+    model_name_or_path="qwen2-7B-instruct"
+)
+llm_reranker = PairWiseReranker(reranker_config)
+```
+</details>
+
+<details>
+<summary>ListWise-Rerank</summary>
+正在实施...
+</details>
+
+<details>
+<summary>TourRank</summary>
+正在实施...
+</details>
+
+<details>
+<summary>SetWise-Rerank</summary>
+我们目前实现了1种Setwise排序方法:
+
+`概率重排`: 提示LLMs判断哪个文档是与给定查询最相关的。基于LLMs生成作为最相关文档的标签的可能性对候选文档进行重排序。该方法源于[A Setwise Approach for Effective and Highly Efficient Zero-shot Ranking with Large Language Models](https://arxiv.org/pdf/2310.09497).
+
+```python
+from trustrag.modules.reranker.llm_reranker import LLMRerankerConfig, SetWiseReranker
+reranker_config = LLMRerankerConfig(
+    model_name_or_path="qwen2-7B-instruct"
+)
+llm_reranker = SetWiseReranker(reranker_config)
+```
+</details>
+
+欲了解更多详情，请参考[reranker inference](./examples/rerankers/).
+
 ### 6 生成器配置
 ```python
 glm4_chat = GLM4Chat(llm_model_path)
