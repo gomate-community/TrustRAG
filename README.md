@@ -291,10 +291,15 @@ Waiting to implement...
 </details>
 
 <details>
+<summary>TourRank</summary>
+Waiting to implement...
+</details>
+
+<details>
 <summary>SetWise-Rerank</summary>
 We have one setwise method so far:
 
-`setwise likelihood`: LLMs are prompted to judge which document is the most relevant to the given query. Candidate documents are reranked based on the likelihood of generating the label as the most relevant document by LLMs. It is the base rerank method used in (https://arxiv.org/pdf/2310.09497).
+`setwise likelihood`: LLMs are prompted to judge which document is the most relevant to the given query. Candidate documents are reranked based on the likelihood of generating the label as the most relevant document by LLMs. It is the base rerank method used in [A Setwise Approach for Effective and Highly Efficient Zero-shot Ranking with Large Language Models](https://arxiv.org/pdf/2310.09497).
 
 ```python
 from trustrag.modules.reranker.llm_reranker import LLMRerankerConfig, SetWiseReranker
@@ -427,6 +432,7 @@ If the group is full or for cooperation and exchange, please contact:
 >This project thanks the following open-source projects for their support and contributions:
 - Document parsing: [infiniflow/ragflow](https://github.com/infiniflow/ragflow/blob/main/deepdoc/README.md)
 - PDF file parsing: [opendatalab/MinerU](https://github.com/opendatalab/MinerU)
+- Document rerank: [ielab/llm-rankers](https://github.com/ielab/llm-rankers)
 
 
 ## 👉 Citation

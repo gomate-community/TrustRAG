@@ -2,7 +2,7 @@ from pymilvus import MilvusClient, DataType
 from typing import List, Dict, Any, Optional
 import numpy as np
 from openai import OpenAI
-from trustrag.modules.retrieval.embedding import EmbeddingGenerator
+from trustrag.modules.vector.embedding import EmbeddingGenerator
 from typing import Union
 class MilvusEngine:
     def __init__(

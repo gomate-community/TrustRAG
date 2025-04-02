@@ -4,7 +4,7 @@ from typing import List, Dict, Any, Optional, Union
 from abc import ABC, abstractmethod
 import numpy as np
 from openai import OpenAI
-from trustrag.modules.retrieval.embedding import EmbeddingGenerator
+from trustrag.modules.vector.embedding import EmbeddingGenerator
 
 
 class QdrantEngine:

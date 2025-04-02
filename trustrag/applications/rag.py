@@ -15,7 +15,7 @@ from trustrag.modules.generator.llm import GLM4Chat
 from trustrag.modules.reranker.bge_reranker import BgeReranker
 from trustrag.modules.retrieval.dense_retriever import DenseRetriever
 from trustrag.modules.document.chunk import TextChunker
-from trustrag.modules.retrieval.embedding import FlagModelEmbedding
+from trustrag.modules.vector.embedding import FlagModelEmbedding
 class ApplicationConfig():
     def __init__(self):
         self.retriever_config = None

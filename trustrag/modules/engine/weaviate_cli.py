@@ -5,7 +5,7 @@ from weaviate import WeaviateClient
 from weaviate.collections import Collection
 import weaviate.classes.config as wc
 from weaviate.classes.config import Property, DataType
-from trustrag.modules.retrieval.embedding import EmbeddingGenerator
+from trustrag.modules.vector.embedding import EmbeddingGenerator
 from  weaviate.classes.query import MetadataQuery
 
 class WeaviateEngine:
