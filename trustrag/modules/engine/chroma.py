@@ -1,7 +1,6 @@
 from typing import List, Dict, Any, Union
 import numpy as np
 import chromadb
-from chromadb.config import Settings
 from trustrag.modules.vector.embedding import EmbeddingGenerator
 
 
