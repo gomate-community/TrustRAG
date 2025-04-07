@@ -137,27 +137,48 @@ class VolcengineChat(Base):
         super().__init__(key, model_name, base_url)
 
 
+class HunYuanChat(Base):
+    def __init__(self, key, model_name="hunyuan-t1-20250321", base_url="https://www.dmxapi.cn/v1"):
+        if not base_url: base_url="https://www.dmxapi.cn/v1"
+        super().__init__(key, model_name, base_url)
 
 if __name__ == '__main__':
 
 
-    import os
-    from openai import OpenAI
+    # import os
+    # from openai import OpenAI
+    #
+    # client = OpenAI(
+    #     api_key="xx",
+    #     base_url="https://ark.cn-beijing.volces.com/api/v3",
+    # )
+    #
+    # # Non-streaming:
+    # print("----- standard request -----")
+    # completion = client.chat.completions.create(
+    #     model="deepseek-r1-250120",  # your model endpoint ID
+    #     messages=[
+    #         {"role": "system", "content": "你是人工智能助手"},
+    #         {"role": "user", "content": "常见的十字花科植物有哪些？"},
+    #     ],
+    # )
+    # print(completion.choices)
+    # print(completion.choices[0].message.content)
 
-    client = OpenAI(
-        api_key="xx",
-        base_url="https://ark.cn-beijing.volces.com/api/v3",
+    # 初始化 DashScopeChat
+    dashscope_chat = HunYuanChat(key="sk-hbMzKcHfnDKSU1NnJPDEFG4xOQE1kB2mcQpkJYtPqDTeTRcV")
+
+    # 定义系统提示和用户消息
+    system_message = "You are a helpful assistant."
+    user_message = "你是谁？"
+
+    # 调用 chat 方法
+    response, total_tokens = dashscope_chat.chat(
+        system=system_message,
+        history=[{"role": "user", "content": user_message}],
+        gen_conf={}  # 可以根据需要添加生成配置，如 top_p 和 temperature
     )
 
-    # Non-streaming:
-    print("----- standard request -----")
-    completion = client.chat.completions.create(
-        model="deepseek-r1-250120",  # your model endpoint ID
-        messages=[
-            {"role": "system", "content": "你是人工智能助手"},
-            {"role": "user", "content": "常见的十字花科植物有哪些？"},
-        ],
-    )
-    print(completion.choices)
-    print(completion.choices[0].message.content)
-
+    # 打印响应
+    print(response)
+    print(f"Total tokens used: {total_tokens}")
