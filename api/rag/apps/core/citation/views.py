@@ -12,8 +12,8 @@
 import loguru
 from fastapi import APIRouter
 
-from api.apps.core.citation.bodys import CitationBody
-from api.apps.handle.response.json_response import ApiResponse
+from api.rag.apps.core.citation.bodys import CitationBody
+from api.rag.apps.handle.response.json_response import ApiResponse
 from trustrag.modules.citation.match_citation import MatchCitation
 from trustrag.modules.citation.source_citation import SourceCitation
 from trustrag.modules.citation.llm_citation import LLMCitation

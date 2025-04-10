@@ -1,5 +1,5 @@
 from trustrag.modules.engine.qdrant import QdrantEngine
-from trustrag.modules.retrieval.embedding import SentenceTransformerEmbedding
+from trustrag.modules.vector.embedding import SentenceTransformerEmbedding
 if __name__ == "__main__":
     # Initialize embedding generators
     local_embedding_generator = SentenceTransformerEmbedding(model_name_or_path="G:/pretrained_models/mteb/bge-m3", device="cuda")

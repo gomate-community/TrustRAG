@@ -1,7 +1,7 @@
 import pandas as pd
 import numpy as np
 from trustrag.modules.engine.qdrant import QdrantEngine
-from trustrag.modules.retrieval.embedding import SentenceTransformerEmbedding
+from trustrag.modules.vector.embedding import SentenceTransformerEmbedding
 from tqdm import tqdm
 
 # Load the dataset
@@ -82,3 +82,7 @@ def encode_paper():
 
     print("All papers have been processed and stored in Qdrant")
 
+
+
+encode_paper()
+search_example()

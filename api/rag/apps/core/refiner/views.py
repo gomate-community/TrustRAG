@@ -12,8 +12,8 @@
 import loguru
 from fastapi import APIRouter
 
-from api.apps.core.refiner.bodys import RefinerBody
-from api.apps.handle.response.json_response import ApiResponse
+from api.rag.apps.core.refiner.bodys import RefinerBody
+from api.rag.apps.handle.response.json_response import ApiResponse
 from trustrag.modules.refiner.compressor import LLMCompressApi
 
 refiner_router = APIRouter()

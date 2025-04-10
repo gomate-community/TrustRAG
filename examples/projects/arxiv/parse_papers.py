@@ -16,9 +16,10 @@ logger = logging.getLogger('pdf_processor')
 
 # Target directories to process
 TOPIC_DIRECTORIES = [
-    "papers/topic_Chain_of_Thought",
-    "papers/topic_LLM_Post-Training",
-    "papers/topic_Reasoning_Large_Language_Models",
+    # "papers/topic_Chain_of_Thought",
+    # "papers/topic_LLM_Post-Training",
+    # "papers/topic_Reasoning_Large_Language_Models",
+    "papers/topic_Retrieval_Augmented_Generation_RAG",
 ]
 
 

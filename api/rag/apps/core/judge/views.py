@@ -12,8 +12,8 @@
 import loguru
 from fastapi import APIRouter
 from trustrag.config.config_loader import config
-from api.apps.core.judge.bodys import JudgeBody
-from api.apps.handle.response.json_response import ApiResponse
+from api.rag.apps.core.judge.bodys import JudgeBody
+from api.rag.apps.handle.response.json_response import ApiResponse
 from trustrag.modules.judger.bge_judger import BgeJudger, BgeJudgerConfig
 from trustrag.modules.judger.chatgpt_judger import OpenaiJudger, OpenaiJudgerConfig
 

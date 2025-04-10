@@ -80,7 +80,6 @@ class QdrantEngine:
         """
         # Generate embedding using the provided embedding generator
         vector = self.embedding_generator.generate_embedding(text)
-
         # Search for closest vectors in the collection
         search_result = self.client.query_points(
             collection_name=self.collection_name,

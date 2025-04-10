@@ -97,7 +97,7 @@ class RagApplication():
         rewrite_query = self.llm_rewriter.rewrite(question)
         rewrite_query = "\n".join(f"{i + 1}. {query.strip()};" for i, query in enumerate(rewrite_query.split(";")))
         loguru.logger.info("Query Rewrite Results:" + rewrite_query)
-        contents = self.retriever.retrieve(query=question, top_k=top_k)
+        contents = self.retriever.retrieve(query=question+" "+rewrite_query, top_k=top_k)
         loguru.logger.info("Retrieve Results：")
         loguru.logger.info(contents)
         # contents = self.reranker.rerank(query=question, documents=[content['text'] for content in contents])

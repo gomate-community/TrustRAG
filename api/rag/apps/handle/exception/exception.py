@@ -9,7 +9,7 @@
 @software: PyCharm
 @description: coding..
 """
-from api.apps.handle.response.json_response import ApiResponse
+from api.rag.apps.handle.response.json_response import ApiResponse
 
 
 class MallException(Exception):

@@ -12,9 +12,9 @@
 import loguru
 from fastapi import APIRouter
 
-from api.apps.core.rerank.bodys import RerankBody
-from api.apps.core.rerank.models import Application
-from api.apps.handle.response.json_response import UserNotFoundResponse, ApiResponse
+from api.rag.apps.core.rerank.bodys import RerankBody
+from api.rag.apps.core.rerank.models import Application
+from api.rag.apps.handle.response.json_response import UserNotFoundResponse, ApiResponse
 from trustrag.modules.reranker.bge_reranker import BgeReranker, BgeRerankerConfig
 from trustrag.config.config_loader import config
 

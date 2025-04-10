@@ -167,6 +167,123 @@ class FlagModelEmbedding(EmbeddingGenerator):
         return embeddings1 @ embeddings2.T
 
 
+import requests
+import numpy as np
+from typing import List, Dict, Any
+from abc import ABC, abstractmethod
+
+
+class CustomServerEmbedding(EmbeddingGenerator):
+    """
+    Implementation of EmbeddingGenerator that uses a remote embedding service.
+    """
+
+    def __init__(
+            self,
+            api_url: str = "http://10.208.63.29:6008/v1/embeddings",
+            api_key: str = "sk-aaabbbcccdddeeefffggghhhiiijjjkkk",
+            model_name: str = "bge-large-en-v1.5",
+            timeout: int = 30,
+            embedding_size=1024,
+    ):
+        """
+        Initialize the CustomServerEmbedding.
+
+        Args:
+            api_url (str): URL of the embedding API
+            api_key (str): API key for authentication
+            model_name (str): Name of the model to use for embeddings
+            timeout (int): Request timeout in seconds
+        """
+        self.api_url = api_url
+        self.headers = {
+            "Authorization": f"Bearer {api_key}",
+            "Content-Type": "application/json"
+        }
+        self.model_name = model_name
+        self.timeout = timeout
+        # We don't know the embedding dimension until we make a request
+        self.embedding_size = embedding_size
+
+    def generate_embeddings(self, texts: List[str]) -> np.ndarray:
+        """
+        Generate embeddings for a list of texts by sending a request to the embedding API.
+
+        Args:
+            texts (List[str]): List of text strings to generate embeddings for
+
+        Returns:
+            np.ndarray: Array of embeddings with shape (len(texts), embedding_dimension)
+        """
+        if not texts:
+            return np.array([])
+
+        payload = {
+            "input": texts,
+            "model": self.model_name
+        }
+
+        try:
+            response = requests.post(
+                self.api_url,
+                headers=self.headers,
+                json=payload,
+                timeout=self.timeout
+            )
+
+            response.raise_for_status()  # Raise exception for HTTP errors
+
+            data = response.json()
+
+            # Extract embeddings from response
+            embeddings = [item["embedding"] for item in data["data"]]
+
+            # Set embedding size if not yet set
+            if self.embedding_size is None and embeddings:
+                self.embedding_size = len(embeddings[0])
+
+            return np.array(embeddings)
+
+        except requests.exceptions.RequestException as e:
+            raise ConnectionError(f"Error connecting to embedding API: {str(e)}")
+        except (KeyError, IndexError, ValueError) as e:
+            raise ValueError(f"Error parsing embedding API response: {str(e)}")
+
+    def get_token_usage(self, texts: List[str]) -> Dict[str, int]:
+        """
+        Get token usage statistics for a list of texts.
+
+        Args:
+            texts (List[str]): List of text strings to get token usage for
+
+        Returns:
+            Dict[str, int]: Dictionary with token usage statistics
+        """
+        if not texts:
+            return {"prompt_tokens": 0, "total_tokens": 0}
+
+        payload = {
+            "input": texts,
+            "model": self.model_name
+        }
+
+        try:
+            response = requests.post(
+                self.api_url,
+                headers=self.headers,
+                json=payload,
+                timeout=self.timeout
+            )
+
+            response.raise_for_status()
+            data = response.json()
+
+            return data.get("usage", {"prompt_tokens": 0, "total_tokens": 0})
+
+        except Exception:
+            return {"prompt_tokens": 0, "total_tokens": 0}
+
+
 class EmbeddingFactory:
     """
     工厂类，用于创建和管理不同类型的嵌入生成器。
