@@ -16,7 +16,7 @@ from pydantic.v1 import IntegerError, MissingError
 from starlette.exceptions import HTTPException as StarletteHTTPException
 from fastapi.exceptions import HTTPException as FastapiHTTPException
 from fastapi.exceptions import RequestValidationError
-from api.apps.handle.response.json_response import *
+from api.rag.apps.handle.response.json_response import *
 
 #  这个可能有点问题
 DEBUGGER=True

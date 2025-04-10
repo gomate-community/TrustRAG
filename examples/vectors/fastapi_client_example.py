@@ -23,6 +23,7 @@ if response.status_code == 200:
     print(f"Model: {data['model']}")
     print(f"Number of embeddings: {len(data['data'])}")
     print(f"Dimension of first embedding: {len(data['data'][0]['embedding'])}")
+    print(data['data'][0]['embedding'])
     print(f"Usage - Prompt tokens: {data['usage']['prompt_tokens']}")
     print(f"Usage - Total tokens: {data['usage']['total_tokens']}")
 else:

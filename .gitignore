@@ -123,3 +123,5 @@ logs/
 _build/
 _static/
 _templates/
+
+api/agent/config.yaml

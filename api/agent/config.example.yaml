@@ -1,0 +1,33 @@
+# Deep Research Configuration
+
+# API settings
+api:
+  port: 3051
+
+# OpenAI settings
+openai:
+  api_key: "sk-xxx"  # Set your OpenAI API key here
+  base_url: "https://api.openai.com/v1"
+  model: "o3-mini"  # Default model, can be "gpt-4o", "gpt-4o-mini"
+
+# Serper settings
+serper:
+  api_key: "xxx"  # Set your Serper API key here
+  base_url: "https://google.serper.dev/search"
+
+# Tavily settings
+tavily:
+  api_key: "tvly-dev-xxx"  # Use the token without 'Bearer' prefix
+  base_url: "https://api.tavily.com/search"
+  # Additional options that can be passed to Tavily API:
+  # search_depth: "advanced" # can be "basic" or "advanced"
+  # max_results: 5 # number of results to return (default is typically 5)
+
+# Research settings
+research:
+  default_breadth: 3
+  default_depth: 2
+  concurrency_limit: 2
+  context_size: 128000
+  # Uncomment and set to "tavily" to use Tavily search engine
+  search_source: "serper"

@@ -13,7 +13,7 @@ from pydantic import BaseModel
 from pydantic import Field
 from enum import IntEnum
 from tortoise import fields
-from apps.core.base import AbstractModel
+from api.rag.apps.core.base import AbstractModel
 
 # class ApplicationModel(BaseModel):
 #     application_name: str = Field("应用名称", description="应用名称")

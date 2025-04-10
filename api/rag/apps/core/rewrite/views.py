@@ -12,8 +12,8 @@
 import loguru
 from fastapi import APIRouter
 
-from api.apps.core.rewrite.bodys import RewriteBody
-from api.apps.handle.response.json_response import ApiResponse
+from api.rag.apps.core.rewrite.bodys import RewriteBody
+from api.rag.apps.handle.response.json_response import ApiResponse
 from trustrag.modules.rewriter.openai_rewrite import OpenaiRewriter,OpenaiRewriterConfig
 
 
