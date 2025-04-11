@@ -123,7 +123,7 @@ async def process_clarifications(
             prompt = f"""
 I'm reviewing a user query where they chose not to provide any clarifications.
 
-Chat history: ```{history_context}```
+Chat history: {history_context}
 
 Original query: {query}
 
