@@ -135,7 +135,6 @@ Since the user didn't provide any clarifications, please:
 2. Make reasonable assumptions for all ambiguous aspects
 3. Determine if this is a simple factual query that doesn't require search
 4. If possible, provide a direct answer along with the refined query
-- User's question is written in Chinese, 需要用中文输出.
 
 Format your response as a valid JSON object with the following structure:
 {{
