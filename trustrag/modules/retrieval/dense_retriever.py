@@ -16,11 +16,13 @@ from tqdm import tqdm
 from abc import ABC, abstractmethod
 from dataclasses import dataclass
 from trustrag.modules.vector.embedding import EmbeddingGenerator
+from trustrag.modules.retrieval.base import BaseConfig
 os.environ["KMP_DUPLICATE_LIB_OK"] = "TRUE"
 
 
 @dataclass
-class DenseRetrieverConfig:
+class DenseRetrieverConfig(BaseConfig):
+
     """Configuration for Dense Retriever"""
     model_name_or_path: str="."
     dim: int = 768
