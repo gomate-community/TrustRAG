@@ -128,7 +128,7 @@ Chat history: {history_context}
 Original query: {query}
 
 The user was asked the following clarification questions but chose not to answer any:
-{"\n\n".join(unanswered)}
+{" ".join(unanswered)}
 
 Since the user didn't provide any clarifications, please:
 1. Analyze the original query as comprehensively as possible
