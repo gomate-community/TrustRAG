@@ -2,6 +2,7 @@ import pandas as pd
 
 papers_df=pd.read_parquet("papers/papers_metadata.parquet")
 
+print(papers_df.shape)
 print(papers_df)
 print(papers_df.columns)
 print(papers_df.dtypes)
