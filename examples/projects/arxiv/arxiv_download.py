@@ -216,7 +216,17 @@ if __name__ == "__main__":
         # "Reasoning Large Language Models",
         # "LLM Post-Training",
         # "Chain of Thought",
-        "Retrieval Augmented Generation RAG",
+        # "Retrieval Augmented Generation RAG",
+        "Continual Learning",
+        "Multi-Agent",
+        "Tool Learning",
+        "Multi-Step Reasoning",
+        "Fine-Tuning",
+        "Reinforcement Learning Large Language Models LLM",
+        "LLM Based Agent",
+        "In-Context Learning",
+        "RLHF",
+        "Pre-Training",
     ]
 
     batch_download_topics(topics, max_papers_per_topic=1000)
