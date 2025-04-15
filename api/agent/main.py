@@ -1,7 +1,7 @@
 import sys
 import os
 sys.path.append(os.path.join(os.path.dirname(__file__), "trustrag"))
-# sys.path.append("/home/searchgpt/yq/DeepResearch/trustrag/")
+sys.path.append("/home/searchgpt/yq/DeepResearch/trustrag/")
 from fastapi import FastAPI, HTTPException
 from pydantic import BaseModel
 from typing import List, Optional, Dict, Any
