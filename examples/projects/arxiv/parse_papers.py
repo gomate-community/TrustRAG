@@ -21,7 +21,16 @@ TOPIC_DIRECTORIES = [
     # "papers/topic_Chain_of_Thought",
     # "papers/topic_LLM_Post-Training",
     # "papers/topic_Reasoning_Large_Language_Models",
-    "papers/topic_Retrieval_Augmented_Generation_RAG",
+    # "papers/topic_Retrieval_Augmented_Generation_RAG",
+    # "papers/topic_Continual_Learning",
+    "papers/topic_Multi-Agent",
+    "papers/topic_Tool_Learning",
+    "papers/topic_Multi-Step_Reasoning",
+    "papers/topic_Fine-Tuning",
+    "topic_LLM_Based_Agent",
+    "topic_In-Context_Learning",
+    "topic_RLHF",
+    "topic_Pre-Training"
 ]
 
 
@@ -122,8 +131,13 @@ def main():
         logger.info(f"Processing topic: {topic_dir} ({len(pdf_files)} PDFs found)")
 
         for pdf_file in tqdm(pdf_files, desc=f"Processing {os.path.basename(topic_dir)}"):
-            pdf_path = os.path.join(pdfs_dir, pdf_file)
             base_filename = os.path.splitext(pdf_file)[0]
+
+            md_file=os.path.join(topic_dir, "output", base_filename, f"{base_filename}.md")
+            if os.path.exists(md_file):
+                print("PDF Processed Continue！")
+                continue
+            pdf_path = os.path.join(pdfs_dir, pdf_file)
             output_dir = os.path.join(topic_dir, "output", base_filename)
 
             os.makedirs(output_dir, exist_ok=True)

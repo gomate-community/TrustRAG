@@ -11,3 +11,6 @@ print(papers_df.dtypes)
 #        'comment', 'journal_ref', 'doi', 'primary_category', 'categories',
 #        'links', 'pdf_url', 'download_time', 'content', 'topic'],
 #       dtype='object')
+
+
+print(papers_df.isnull().sum())

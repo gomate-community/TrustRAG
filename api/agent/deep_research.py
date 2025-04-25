@@ -123,19 +123,18 @@ async def process_clarifications(
             prompt = f"""
 I'm reviewing a user query where they chose not to provide any clarifications.
 
-Chat history: ```{history_context}```
+Chat history: {history_context}
 
 Original query: {query}
 
 The user was asked the following clarification questions but chose not to answer any:
-{"\n\n".join(unanswered)}
+{" ".join(unanswered)}
 
 Since the user didn't provide any clarifications, please:
 1. Analyze the original query as comprehensively as possible
 2. Make reasonable assumptions for all ambiguous aspects
 3. Determine if this is a simple factual query that doesn't require search
 4. If possible, provide a direct answer along with the refined query
-- User's question is written in Chinese, 需要用中文输出.
 
 Format your response as a valid JSON object with the following structure:
 {{

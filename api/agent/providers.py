@@ -27,7 +27,7 @@ openai_client = _get_openai_client()
 
 # Constants
 MIN_CHUNK_SIZE = 140
-encoder = tiktoken.get_encoding("cl100k_base")  # Using cl100k as a replacement for o200k_base
+# encoder = tiktoken.get_encoding("cl100k_base")  # Using cl100k as a replacement for o200k_base
 
 logger.info(f"OpenAI client: {openai_client}, model: {get_config()['openai']['model']}")
 
@@ -70,7 +70,8 @@ def trim_prompt(prompt, context_size=None):
     if not prompt:
         return ""
 
-    length = len(encoder.encode(prompt))
+    length = len(prompt.slit())
+    # length = len(encoder.encode(prompt))
     if length <= context_size:
         return prompt
 
