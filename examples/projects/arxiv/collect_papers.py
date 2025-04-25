@@ -9,6 +9,15 @@ TOPIC_DIRECTORIES = [
     "papers/topic_LLM_Post-Training",
     "papers/topic_Reasoning_Large_Language_Models",
     "papers/topic_Retrieval_Augmented_Generation_RAG",
+    "papers/topic_Continual_Learning",
+    "papers/topic_Multi-Agent",
+    "papers/topic_Tool_Learning",
+    "papers/topic_Multi-Step_Reasoning",
+    "papers/topic_Fine-Tuning",
+    "topic_LLM_Based_Agent",
+    "topic_In-Context_Learning",
+    "topic_RLHF",
+    "topic_Pre-Training"
 ]
 
 # 用于存储所有论文数据的列表

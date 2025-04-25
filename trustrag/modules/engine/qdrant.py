@@ -1,9 +1,7 @@
 from qdrant_client import QdrantClient
 from qdrant_client.models import VectorParams, Distance, Filter, FieldCondition, MatchValue
 from typing import List, Dict, Any, Optional, Union
-from abc import ABC, abstractmethod
 import numpy as np
-from openai import OpenAI
 from trustrag.modules.vector.embedding import EmbeddingGenerator
 
 
