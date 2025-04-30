@@ -14,3 +14,6 @@ print(papers_df.dtypes)
 
 
 print(papers_df.isnull().sum())
+
+print(papers_df["content"])
+print(papers_df["topic"].value_counts())
