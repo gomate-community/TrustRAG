@@ -101,6 +101,8 @@ if hasattr(response.choices[0].message, 'reasoning_content'):
     print(response.choices[0].message.reasoning_content)
 print(response.choices[0].message.content)
 
+
+from openai import OpenAI
 client = OpenAI(
     api_key="sk-xxx",  # 随便填写，只是为了通过接⼝参数校验
     base_url="http://10.208.62.156:7000/v1",
