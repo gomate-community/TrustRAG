@@ -27,7 +27,7 @@ class MarkdownParser:
         self,
         fnm: Union[str, bytes],
         encoding: str = "utf-8",
-    ) -> List[str]:
+    ) -> tuple[list[str], list]:
         """
         Extracts chunks of content from a given Markdown file.
 
@@ -91,7 +91,7 @@ class MarkdownParser:
                     )
         return documents
 
-    def merge_header_contents(self, documents: List[Document]) -> List[str]:
+    def merge_header_contents(self, documents: List[Document]) -> tuple[list[str], list]:
         """
         Merges headers and their corresponding content into a list of paragraphs.
 
