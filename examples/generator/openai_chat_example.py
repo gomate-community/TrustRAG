@@ -3,8 +3,8 @@ import os
 from dotenv import load_dotenv
 load_dotenv()
 
-for key, value in os.environ.items():
-    print(f"{key} = {value}")
+# for key, value in os.environ.items():
+#     print(f"{key} = {value}")
 client = OpenAI(
     # 替换为您需要调用的模型服务Base Url
     base_url=os.environ.get("BASE_URL"),
