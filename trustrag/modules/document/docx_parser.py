@@ -35,7 +35,16 @@ class DocxParser:
             for p, n in patt:
                 if re.search(p, b):
                     return n
-            tks = [t for t in rag_tokenizer.tokenize(b).split(" ") if len(t) > 1]
+            try:
+                tks = [t for t in rag_tokenizer.tokenize(b).split(" ") if len(t) > 1]
+            except (AttributeError, TypeError) as e:
+                # 处理 tokenize 返回列表或其他类型的情况
+                tokens = rag_tokenizer.tokenize(b)
+                if isinstance(tokens, list):
+                    tks = [t for t in " ".join(tokens).split(" ") if len(t) > 1]
+                else:
+                    # 如果是其他类型，尝试转换为字符串
+                    tks = [t for t in str(tokens).split(" ") if len(t) > 1]
             if len(tks) > 3:
                 if len(tks) < 12:
                     return "Tx"

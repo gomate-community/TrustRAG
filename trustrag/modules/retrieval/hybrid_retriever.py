@@ -13,7 +13,7 @@ from typing import List, Dict
 from trustrag.modules.retrieval.bm25s_retriever import BM25Retriever, BM25RetrieverConfig
 from trustrag.modules.retrieval.dense_retriever import DenseRetriever, DenseRetrieverConfig
 from trustrag.modules.retrieval.base import BaseRetriever, BaseConfig
-
+from trustrag.modules.vector.embedding import EmbeddingGenerator
 
 class HybridRetrieverConfig(BaseConfig):
     """
@@ -43,9 +43,9 @@ class HybridRetriever(BaseRetriever):
             retrieve(query, top_k): Retrieves the top_k documents using the hybrid method.
     """
 
-    def __init__(self, config):
+    def __init__(self, config,embedding_generator: EmbeddingGenerator):
         self.bm25_retriever = BM25Retriever(config.bm25_config)
-        self.dense_retriever = DenseRetriever(config.dense_config)
+        self.dense_retriever = DenseRetriever(config.dense_config,embedding_generator)
         self.bm25_weight = config.bm25_weight
         self.dense_weight = config.dense_weight
 
