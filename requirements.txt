@@ -17,7 +17,7 @@ langchain-huggingface
 langchain-openai
 langchain-community
 langsmith
-transformers==4.46.0
+transformers
 pandas
 nltk
 sentencepiece
@@ -69,3 +69,4 @@ chromadb
 langdetect
 firecrawl
 playwright
+mineru
