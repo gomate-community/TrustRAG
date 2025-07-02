@@ -48,8 +48,21 @@ class RagApplication():
                 pass
         print("chunking for paragraphs")
         for paragraphs in all_paragraphs:
-            chunks=self.tc.get_chunks(paragraphs, 256)
+            # 确保paragraphs是list，并处理其中的元素
+            if isinstance(paragraphs, list) and paragraphs:
+                if isinstance(paragraphs[0], dict):
+                    # list[dict] -> list[str]
+                    text_list = [' '.join(str(value) for value in item.values()) for item in paragraphs]
+                else:
+                    # 已经是list[str]
+                    text_list = [str(item) for item in paragraphs]
+            else:
+                # 处理其他情况
+                text_list = [str(paragraphs)] if paragraphs else []
+
+            chunks = self.tc.get_chunks(text_list, 256)
             all_chunks.extend(chunks)
+
         self.retriever.build_from_texts(all_chunks)
         print("init_vector_store done! ")
         self.retriever.save_index(self.config.retriever_config.index_path)

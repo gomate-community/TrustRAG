@@ -1,4 +1,4 @@
-from trustrag.modules.retrieval.embedding import SentenceTransformerEmbedding
+from trustrag.modules.vector.embedding import SentenceTransformerEmbedding
 from trustrag.modules.engine.weaviate_cli import WeaviateEngine
 if __name__ == '__main__':
     # 初始化 MilvusEngine

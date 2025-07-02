@@ -46,6 +46,4 @@ class CommonParser():
             raise NotImplementedError(
                 "file type not supported yet(pdf, xlsx, doc, docx, txt supported)")
         contents = parser.parse(content)
-        # loguru.logger.info(contents)
-        # contents = self.tc.chunk_sentences(contents, chunk_size=512)
         return contents

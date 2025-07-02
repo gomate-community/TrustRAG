@@ -4,7 +4,7 @@ import pandas as pd
 from tqdm import tqdm
 
 from trustrag.modules.document.common_parser import CommonParser
-from trustrag.modules.generator.llm import GLMChat
+from trustrag.modules.generator.llm import GLM4Chat
 from trustrag.modules.retrieval.dense_retriever import DenseRetriever, DenseRetrieverConfig
 from trustrag.modules.rewriter.hyde_rewriter import HydeRewriter
 from trustrag.modules.rewriter.promptor import Promptor
@@ -40,7 +40,7 @@ if __name__ == '__main__':
             retriever.add_text(document)
 
     print("init_vector_store done! ")
-    generator = GLMChat("/data/users/searchgpt/pretrained_models/glm-4-9b-chat")
+    generator = GLM4Chat("/data/users/searchgpt/pretrained_models/glm-4-9b-chat")
 
     hyde = HydeRewriter(promptor, generator, retriever)
     hypothesis_document = hyde.rewrite("RCEP具体包括哪些国家")

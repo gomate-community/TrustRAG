@@ -10,12 +10,12 @@
 @description: A custom Markdown parser for extracting and processing chunks from Markdown files.
 """
 import re
-from typing import List, Dict, Union
-from trustrag.modules.document.utils import get_encoding
+from typing import List, Union
+
 from langchain_community.document_loaders import UnstructuredMarkdownLoader
 from langchain_core.documents.base import Document
 
-
+from trustrag.modules.document.utils import get_encoding
 
 
 class MarkdownParser:
@@ -24,10 +24,11 @@ class MarkdownParser:
     """
 
     def parse(
-        self,
-        fnm: Union[str, bytes],
-        encoding: str = "utf-8",
-    ) -> tuple[list[str], list]:
+            self,
+            fnm: Union[str, bytes],
+            encoding: str = "utf-8",
+            return_paragraphs: bool = False,
+    ) -> tuple[list[str], list] | list:
         """
         Extracts chunks of content from a given Markdown file.
 
@@ -46,8 +47,11 @@ class MarkdownParser:
         else:
             loader = UnstructuredMarkdownLoader(fnm, mode="elements")
             documents = loader.load()
-        paragraphs,merged_data = self.merge_header_contents(documents)
-        return paragraphs,merged_data
+        paragraphs, merged_data = self.merge_header_contents(documents)
+        if return_paragraphs:
+            return paragraphs, merged_data
+        else:
+            return merged_data
 
     def parse_markdown_to_documents(self, content: str) -> List[Document]:
         """
@@ -150,11 +154,10 @@ class MarkdownParser:
                 'content': merged_content
             })
         paragraphs = [item["title"] + "\n" + item["content"] for item in merged_data]
-        merged_data=self.merge_data_entries(merged_data)
-        return paragraphs,merged_data
+        merged_data = self.merge_data_entries(merged_data)
+        return paragraphs, merged_data
 
-
-    def merge_data_entries(self,data_list):
+    def merge_data_entries(self, data_list):
         """
         Merge data entries where content is empty with subsequent entries.
 
@@ -206,7 +209,6 @@ class MarkdownParser:
         return result
 
 
-
 if __name__ == '__main__':
     data = [
 
@@ -239,6 +241,6 @@ if __name__ == '__main__':
             "content": "马克•吐温说过：一个人的一生中在两种情况下他不应该去投机：当他输不起的时候，当他输得起的时候。正是由于如此，理解投资和投机之间的区别是取得投资成功的第一步。\n对投资者来说，股票代表的是相应企业的部分所有权，而债券则是给这些企业的贷款。投资者在比较证券的价格与他们被估测的价值之后做出买卖的决定。当他们认为自己知道一些其他人不知道、不关心或者宁愿忽略的事情时，他们就会买进交易。他们会买进那些回报与风险相比看起来有吸引力的证券，同时卖出那些回报不再能抵御风险的证券。。"
         }
     ]
-    mp=MarkdownParser()
-    result=mp.merge_data_entries(data)
+    mp = MarkdownParser()
+    result = mp.merge_data_entries(data)
     print(result)
