@@ -17,7 +17,7 @@ from trustrag.modules.chunks.sentence_chunk import SentenceChunker
 if __name__ == '__main__':
     text_parser=TextParser()
     tc=TextChunker()
-    sc=SentenceChunker(chunk_size=512)
+    sc=SentenceChunker()
     paragraphs = text_parser.parse(fnm="../../data/docs/1737765690374-穷查理宝典.pdf-15a72b24-cc5c-4a4e-ae9e-7514e0d9be02.txt")
     print(len(paragraphs))
     chunks=tc.get_chunks(paragraphs,chunk_size=128)

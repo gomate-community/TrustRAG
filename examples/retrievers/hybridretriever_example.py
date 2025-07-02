@@ -19,7 +19,6 @@ from trustrag.modules.document.utils import PROJECT_BASE
 from trustrag.modules.retrieval.bm25s_retriever import BM25RetrieverConfig
 from trustrag.modules.retrieval.dense_retriever import DenseRetrieverConfig
 from trustrag.modules.retrieval.hybrid_retriever import HybridRetriever, HybridRetrieverConfig
-from trustrag.modules.generator.llm import PROMPT_TEMPLATE,SYSTEM_PROMPT
 
 def process_chunk(text):
     """

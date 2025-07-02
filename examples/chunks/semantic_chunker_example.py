@@ -1,5 +1,5 @@
 from trustrag.modules.chunks.semantic_chunk import SemanticChunker
-from trustrag.modules.retrieval.embedding import SentenceTransformerEmbedding
+from trustrag.modules.vector.embedding import SentenceTransformerEmbedding
 
 if __name__ == "__main__":
     # Load the text from the file
