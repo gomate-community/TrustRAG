@@ -88,4 +88,4 @@ class RagApplication():
         #     selected_idx=[idx for idx in range(len(contents))],
         #     markdown=True
         # )
-        return result, history, contents
+        return result, history, contents,question
