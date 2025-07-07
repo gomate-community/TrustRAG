@@ -10,21 +10,21 @@
 import os
 import shutil
 import time
+from datetime import datetime
+
 import gradio as gr
 import loguru
 import pandas as pd
-from anyio import value
+import pytz
 
 from trustrag.applications.rag_openai_bge import RagApplication, ApplicationConfig
 from trustrag.modules.reranker.bge_reranker import BgeRerankerConfig
 from trustrag.modules.retrieval.dense_retriever import DenseRetrieverConfig
-from datetime import datetime
-import pytz
+
 # ========================== Config Start====================
 app_config = ApplicationConfig()
 app_config.docs_path = r"H:\Projects\TrustRAG\data\docs"
-# app_config.key = "sk-04031f18c05a4dd5a561d33d984ca40f"
-app_config.key = "sk-gDbFoQAYz9pwqBsH0aPA1H8DN9s0B9F3vWNjjPcijRBFjk7f"
+app_config.key = "sk-xxx"
 retriever_config = DenseRetrieverConfig(
     model_name_or_path=r"H:\pretrained_models\mteb\bge-large-zh-v1.5",
     dim=1024,
