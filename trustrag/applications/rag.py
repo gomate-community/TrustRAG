@@ -15,7 +15,7 @@ from trustrag.modules.generator.llm import GLM4Chat
 from trustrag.modules.reranker.bge_reranker import BgeReranker
 from trustrag.modules.retrieval.dense_retriever import DenseRetriever
 from trustrag.modules.document.chunk import TextChunker
-from trustrag.modules.vector.embedding import FlagModelEmbedding
+from trustrag.modules.vector.embedding import SentenceTransformerEmbedding
 class ApplicationConfig():
     def __init__(self):
         self.retriever_config = None
@@ -26,7 +26,7 @@ class RagApplication():
     def __init__(self, config):
         self.config = config
         self.parser = CommonParser()
-        self.embedding_generator = FlagModelEmbedding(self.config.retriever_config.model_name_or_path)
+        self.embedding_generator = SentenceTransformerEmbedding(self.config.retriever_config.model_name_or_path)
         self.retriever = DenseRetriever(self.config.retriever_config,self.embedding_generator)
         self.reranker = BgeReranker(self.config.rerank_config)
         self.llm = GLM4Chat(self.config.llm_model_path)
