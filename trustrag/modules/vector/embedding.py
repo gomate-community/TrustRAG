@@ -1,15 +1,30 @@
 import os
-from typing import List, Optional
+from typing import List, Dict
+from typing import Optional
 
 import numpy as np
+import requests
 import torch
-from FlagEmbedding import FlagAutoModel
 from openai import OpenAI
 from sentence_transformers import SentenceTransformer
 from tenacity import retry, stop_after_attempt, wait_random_exponential
 from transformers import AutoModel, AutoTokenizer
 
 from trustrag.modules.vector.base import EmbeddingGenerator
+
+
+class SentenceTransformerEmbedding(EmbeddingGenerator):
+    def __init__(
+            self,
+            model_name_or_path: str = "sentence-transformers/multi-qa-mpnet-base-cos-v1",
+            device: str = None
+    ):
+        self.device = device or ("cuda" if torch.cuda.is_available() else "cpu")
+        self.model = SentenceTransformer(model_name_or_path, device=self.device)
+        self.embedding_size = self.model.get_sentence_embedding_dimension()
+
+    def generate_embeddings(self, texts: List[str]) -> np.ndarray:
+        return self.model.encode(texts, show_progress_bar=False)
 
 
 class OpenAIEmbedding(EmbeddingGenerator):
@@ -34,20 +49,6 @@ class OpenAIEmbedding(EmbeddingGenerator):
             encoding_format="float"
         )
         return np.array([data.embedding for data in response.data])
-
-
-class SentenceTransformerEmbedding(EmbeddingGenerator):
-    def __init__(
-            self,
-            model_name_or_path: str = "sentence-transformers/multi-qa-mpnet-base-cos-v1",
-            device: str = None
-    ):
-        self.device = device or ("cuda" if torch.cuda.is_available() else "cpu")
-        self.model = SentenceTransformer(model_name_or_path, device=self.device)
-        self.embedding_size = self.model.get_sentence_embedding_dimension()
-
-    def generate_embeddings(self, texts: List[str]) -> np.ndarray:
-        return self.model.encode(texts, show_progress_bar=False)
 
 
 class HuggingFaceEmbedding(EmbeddingGenerator):
@@ -111,66 +112,6 @@ class DashscopeEmbedding(EmbeddingGenerator):
             )
             embeddings.append(response.output['embeddings'][0]['embedding'])
         return np.array(embeddings)
-
-
-class FlagModelEmbedding(EmbeddingGenerator):
-    def __init__(
-            self,
-            model_name: str = "BAAI/bge-base-en-v1.5",
-            query_instruction: Optional[str] = "Represent this sentence for searching relevant passages:",
-            use_fp16: bool = True,
-            device: str = None
-    ):
-        """
-        Initialize FlagModel embedding generator.
-
-        Args:
-            model_name (str): Name or path of the model
-            query_instruction (str, optional): Instruction prefix for queries
-            use_fp16 (bool): Whether to use FP16 for inference
-            device (str, optional): Device to run the model on
-        """
-        self.device = device or ("cuda" if torch.cuda.is_available() else "cpu")
-        self.model = FlagAutoModel.from_finetuned(
-            model_name,
-            query_instruction_for_retrieval=query_instruction,
-            use_fp16=use_fp16,
-            devices=self.device
-        )
-        # if self.device == "cuda":
-        #     self.model.to(device)
-
-    def generate_embeddings(self, texts: List[str]) -> np.ndarray:
-        """
-        Generate embeddings for a list of texts.
-
-        Args:
-            texts (List[str]): List of texts to generate embeddings for
-
-        Returns:
-            np.ndarray: Array of embeddings
-        """
-        embeddings = self.model.encode(texts)
-        return np.array(embeddings)
-
-    def compute_similarity(self, embeddings1: np.ndarray, embeddings2: np.ndarray) -> np.ndarray:
-        """
-        Compute similarity matrix between two sets of embeddings using inner product.
-
-        Args:
-            embeddings1 (np.ndarray): First set of embeddings
-            embeddings2 (np.ndarray): Second set of embeddings
-
-        Returns:
-            np.ndarray: Similarity matrix
-        """
-        return embeddings1 @ embeddings2.T
-
-
-import requests
-import numpy as np
-from typing import List, Dict, Any
-from abc import ABC, abstractmethod
 
 
 class CustomServerEmbedding(EmbeddingGenerator):

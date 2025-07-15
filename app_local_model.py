@@ -10,7 +10,6 @@
 import sys
 
 sys.path.append(".")
-import os
 import shutil
 import time
 import gradio as gr
@@ -18,41 +17,98 @@ import loguru
 import pandas as pd
 from datetime import datetime
 import pytz
-from trustrag.config.config_loader import ConfigLoader
-from trustrag.applications.rag import RagApplication, ApplicationConfig
 from trustrag.modules.reranker.bge_reranker import BgeRerankerConfig
 from trustrag.modules.retrieval.dense_retriever import DenseRetrieverConfig
+import os
+from trustrag.modules.citation.match_citation import MatchCitation
+from trustrag.modules.document.common_parser import CommonParser
+from trustrag.modules.generator.llm import Qwen3Chat
+from trustrag.modules.reranker.bge_reranker import BgeReranker
+from trustrag.modules.retrieval.dense_retriever import DenseRetriever
+from trustrag.modules.document.chunk import TextChunker
+from trustrag.modules.vector.embedding import SentenceTransformerEmbedding
+
+
+class ApplicationConfig():
+    def __init__(self):
+        self.retriever_config = None
+        self.rerank_config = None
+
+
+class RagApplication():
+    def __init__(self, config):
+        self.config = config
+        self.parser = CommonParser()
+        self.embedding_generator = SentenceTransformerEmbedding(self.config.retriever_config.model_name_or_path)
+        self.retriever = DenseRetriever(self.config.retriever_config, self.embedding_generator)
+        self.reranker = BgeReranker(self.config.rerank_config)
+        self.llm = Qwen3Chat(self.config.llm_model_path)
+        self.mc = MatchCitation()
+        self.tc = TextChunker()
+
+    def init_vector_store(self):
+        """
+
+        """
+        print("init_vector_store ... ")
+        all_paragraphs = []
+        all_chunks = []
+        for filename in os.listdir(self.config.docs_path):
+            file_path = os.path.join(self.config.docs_path, filename)
+            try:
+                paragraphs = self.parser.parse(file_path)
+                all_paragraphs.append(paragraphs)
+            except:
+                pass
+        print("chunking for paragraphs")
+        for paragraphs in all_paragraphs:
+            # 确保paragraphs是list，并处理其中的元素
+            if isinstance(paragraphs, list) and paragraphs:
+                if isinstance(paragraphs[0], dict):
+                    # list[dict] -> list[str]
+                    text_list = [' '.join(str(value) for value in item.values()) for item in paragraphs]
+                else:
+                    # 已经是list[str]
+                    text_list = [str(item) for item in paragraphs]
+            else:
+                # 处理其他情况
+                text_list = [str(paragraphs)] if paragraphs else []
+
+            chunks = self.tc.get_chunks(text_list, 256)
+            all_chunks.extend(chunks)
+
+        self.retriever.build_from_texts(all_chunks)
+        print("init_vector_store done! ")
+        self.retriever.save_index(self.config.retriever_config.index_path)
+
+    def load_vector_store(self):
+        self.retriever.load_index(self.config.retriever_config.index_path)
+
+    def add_document(self, file_path):
+        chunks = self.parser.parse(file_path)
+        for chunk in chunks:
+            self.retriever.add_text(chunk)
+        print("add_document done!")
+
+    def chat(self, question: str = '', top_k: int = 5):
+        contents = self.retriever.retrieve(query=question, top_k=top_k)
+        contents = self.reranker.rerank(query=question, documents=[content['text'] for content in contents])
+        content = '\n'.join([content['text'] for content in contents])
+        result, history = self.llm.chat(question, [], content)
+        return result, history, contents, question
 
 
 # ========================== Config Start====================
-# # 创建全局配置实例
-# config = ConfigLoader(config_path="config_local.json")
-# app_config = ApplicationConfig()
-#
-# llm_model = config.get_config('models.llm')
-# embedding_model = config.get_config('models.embedding')
-# reranker_model = config.get_config('models.reranker')
-#
-# # 加载配置
-# app_config.docs_path = config.get_config('paths.docs')
-# retriever_config = DenseRetrieverConfig(
-#     model_name_or_path=embedding_model["path"],
-#     dim=1024,
-#     index_path=config.get_config('index')
-# )
-# rerank_config = BgeRerankerConfig(
-#     model_name_or_path=reranker_model["path"],
-# )
 app_config = ApplicationConfig()
-app_config.docs_path = r"G:\Projects\TrustRAG\data\docs"
-app_config.llm_model_path = r"G:\pretrained_models\llm\glm-4-9b-chat"
+app_config.docs_path = r"/data/users/searchgpt/yq/TrustRAG/data/docs"
+app_config.llm_model_path = r"/data/users/searchgpt/pretrained_models/Qwen3-4B"
 retriever_config = DenseRetrieverConfig(
-    model_name_or_path=r"G:\pretrained_models\mteb\bge-large-zh-v1.5",
+    model_name_or_path=r"/data/users/searchgpt/pretrained_models/bge-large-zh-v1.5",
     dim=1024,
-    index_path=r'G:\Projects\TrustRAG\examples\retrievers\dense_cache'
+    index_path=r'/data/users/searchgpt/yq/TrustRAG/examples/retrievers/dense_cache'
 )
 rerank_config = BgeRerankerConfig(
-    model_name_or_path=r"G:\pretrained_models\mteb\bge-reranker-large"
+    model_name_or_path=r"/data/users/searchgpt/pretrained_models/bge-reranker-large"
 )
 
 app_config.retriever_config = retriever_config
@@ -60,9 +116,7 @@ app_config.rerank_config = rerank_config
 application = RagApplication(app_config)
 application.init_vector_store()
 
-
 # ========================== Config End====================
-
 
 # 创建北京时区的变量
 beijing_tz = pytz.timezone("Asia/Shanghai")
