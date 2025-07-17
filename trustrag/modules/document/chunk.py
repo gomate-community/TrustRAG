@@ -119,7 +119,6 @@ class TextChunker:
             list[str]: A list of text chunks, each containing sentences that fit within the token limit.
         """
         # Combine paragraphs into a single text
-        print(paragraphs)
         text = ''.join(paragraphs)
 
         # Split the text into sentences

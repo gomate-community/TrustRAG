@@ -150,25 +150,192 @@ pip install -e .
 ```
 
 
-### 2 导入模块
+### 2 完整RAG系统示例
+
+基于demo.py的完整RAG问答系统实现：
+
+#### 2.1 导入模块
 
 ```python
-import pickle
-import pandas as pd
+import os
+import sys
 from tqdm import tqdm
 
+from trustrag.modules.document.common_parser import CommonParser
 from trustrag.modules.document.chunk import TextChunker
-from trustrag.modules.document.txt_parser import TextParser
-from trustrag.modules.document.utils import PROJECT_BASE
-from trustrag.modules.generator.llm import GLM4Chat
+from trustrag.modules.vector.embedding import SentenceTransformerEmbedding
 from trustrag.modules.reranker.bge_reranker import BgeRerankerConfig, BgeReranker
-from trustrag.modules.retrieval.bm25s_retriever import BM25RetrieverConfig
-from trustrag.modules.retrieval.dense_retriever import DenseRetrieverConfig
-from trustrag.modules.retrieval.hybrid_retriever import HybridRetriever, HybridRetrieverConfig
+from trustrag.modules.retrieval.dense_retriever import DenseRetrieverConfig, DenseRetriever
+from trustrag.modules.generator.llm import Qwen3Chat
 ```
 
+#### 2.2 配置参数
 
-### 3 文档解析以及切片
+```python
+# 配置参数
+DOCS_PATH = r"data/docs"
+LLM_MODEL_PATH = r"G:\pretrained_models\llm\Qwen3-4B"
+EMBEDDING_MODEL_PATH = r"G:\pretrained_models\mteb\bge-large-zh-v1.5"
+RERANKER_MODEL_PATH = r"G:\pretrained_models\mteb\bge-reranker-large"
+INDEX_PATH = r"examples/retrievers/dense_cache"
+EMBEDDING_DIM = 1024
+CHUNK_SIZE = 256
+TOP_K = 5
+```
+
+#### 2.3 初始化组件
+
+```python
+print("🚀 启动RAG问答系统")
+print("="*50)
+
+# 初始化文档解析器
+parser = CommonParser()
+print("  ✓ 文档解析器初始化完成")
+
+# 初始化文本分块器
+tc = TextChunker()
+print("  ✓ 文本分块器初始化完成")
+
+# 初始化嵌入模型
+embedding_generator = SentenceTransformerEmbedding(EMBEDDING_MODEL_PATH)
+print("  ✓ 嵌入模型初始化完成")
+
+# 初始化检索器
+retriever_config = DenseRetrieverConfig(
+    model_name_or_path=EMBEDDING_MODEL_PATH,
+    dim=EMBEDDING_DIM,
+    index_path=INDEX_PATH
+)
+retriever = DenseRetriever(retriever_config, embedding_generator)
+print("  ✓ 检索器初始化完成")
+
+# 初始化重排序器
+rerank_config = BgeRerankerConfig(
+    model_name_or_path=RERANKER_MODEL_PATH
+)
+reranker = BgeReranker(rerank_config)
+print("  ✓ 重排序器初始化完成")
+
+# 初始化大语言模型
+llm = Qwen3Chat(LLM_MODEL_PATH)
+print("  ✓ 大语言模型初始化完成")
+```
+
+#### 2.4 构建向量索引
+
+```python
+# 检查是否存在现有索引
+if os.path.exists(INDEX_PATH):
+    print("  发现现有索引，正在加载...")
+    retriever.load_index(INDEX_PATH)
+    print("  ✓ 索引加载完成")
+else:
+    print("  未发现现有索引，开始构建新索引...")
+    
+    # 检查文档目录
+    if not os.path.exists(DOCS_PATH):
+        print(f"  ❌ 文档目录 {DOCS_PATH} 不存在")
+        print(f"  请创建目录并添加文档文件")
+        exit(1)
+    
+    # 获取所有文档文件
+    doc_files = [f for f in os.listdir(DOCS_PATH) if os.path.isfile(os.path.join(DOCS_PATH, f))]
+    if not doc_files:
+        print("  ❌ 文档目录为空，请添加文档文件")
+        exit(1)
+    
+    print(f"  发现 {len(doc_files)} 个文档文件")
+    
+    # 解析所有文档
+    all_paragraphs = []
+    for filename in doc_files:
+        file_path = os.path.join(DOCS_PATH, filename)
+        try:
+            paragraphs = parser.parse(file_path)
+            all_paragraphs.append(paragraphs)
+            print(f"  ✓ 已解析: {filename}")
+        except Exception as e:
+            print(f"  ❌ 解析失败 {filename}: {e}")
+    
+    # 文档分块
+    print("  正在进行文档分块...")
+    all_chunks = []
+    for paragraphs in tqdm(all_paragraphs, desc="  分块处理"):
+        if isinstance(paragraphs, list) and paragraphs:
+            if isinstance(paragraphs[0], dict):
+                text_list = [' '.join(str(value) for value in item.values()) for item in paragraphs]
+            else:
+                text_list = [str(item) for item in paragraphs]
+        else:
+            text_list = [str(paragraphs)] if paragraphs else []
+        
+        chunks = tc.get_chunks(text_list, CHUNK_SIZE)
+        all_chunks.extend(chunks)
+    
+    print(f"  ✓ 生成了 {len(all_chunks)} 个文档块")
+    
+    # 构建向量索引
+    print("  正在构建向量索引...")
+    retriever.build_from_texts(all_chunks)
+    
+    # 保存索引
+    index_dir = os.path.dirname(INDEX_PATH)
+    if not os.path.exists(index_dir):
+        os.makedirs(index_dir)
+    retriever.save_index(INDEX_PATH)
+    print(f"  ✓ 索引已保存到: {INDEX_PATH}")
+```
+
+#### 2.5 RAG问答处理
+
+```python
+def rag_chat(question):
+    print(f"正在处理问题: {question}")
+    
+    # 检索相关文档
+    print("  正在检索相关文档...")
+    contents = retriever.retrieve(query=question, top_k=TOP_K)
+    print(f"  ✓ 检索到 {len(contents)} 个相关文档块")
+    
+    # 重排序
+    print("  正在重排序文档...")
+    contents = reranker.rerank(query=question, documents=[content['text'] for content in contents])
+    print("  ✓ 文档重排序完成")
+    
+    # 构建上下文
+    print("  正在构建上下文...")
+    context = '\n'.join([content['text'] for content in contents])
+    print("  ✓ 上下文构建完成")
+    
+    # 生成回答
+    print("  正在生成回答...")
+    result, history = llm.chat(question, [], context)
+    print("  ✓ 回答生成完成")
+    
+    return result, contents
+
+# 使用示例
+question = "你的问题"
+result, sources = rag_chat(question)
+print(f"回答: {result}")
+print(f"参考了 {len(sources)} 个相关文档片段")
+```
+
+#### 2.6 运行完整示例
+
+直接运行demo.py可以启动交互式RAG问答系统：
+
+```bash
+python demo.py
+```
+
+系统支持以下命令：
+- 输入问题进行RAG问答
+- 输入 `quit` 或 `exit` 退出程序
+- 输入 `rebuild` 重新构建索引
+
+### 3 原有示例（兼容性参考）
 
 ```text
 def generate_chunks():
