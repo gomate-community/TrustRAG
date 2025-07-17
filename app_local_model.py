@@ -7,8 +7,9 @@
 @time: 2024/05/21
 @contact: yanqiangmiffy@gamil.com
 """
+import os
 import sys
-
+os.environ["CUDA_VISIBLE_DEVICES"] = "0"
 sys.path.append(".")
 import shutil
 import time
@@ -17,17 +18,15 @@ import loguru
 import pandas as pd
 from datetime import datetime
 import pytz
-from trustrag.modules.reranker.bge_reranker import BgeRerankerConfig
-from trustrag.modules.retrieval.dense_retriever import DenseRetrieverConfig
-import os
-from trustrag.modules.citation.match_citation import MatchCitation
+from tqdm import tqdm
+
 from trustrag.modules.document.common_parser import CommonParser
-from trustrag.modules.generator.llm import Qwen3Chat
-from trustrag.modules.reranker.bge_reranker import BgeReranker
-from trustrag.modules.retrieval.dense_retriever import DenseRetriever
 from trustrag.modules.document.chunk import TextChunker
 from trustrag.modules.vector.embedding import SentenceTransformerEmbedding
-
+from trustrag.modules.reranker.bge_reranker import BgeRerankerConfig,BgeReranker
+from trustrag.modules.retrieval.dense_retriever import DenseRetrieverConfig,DenseRetriever
+from trustrag.modules.generator.llm import Qwen3Chat
+from trustrag.modules.citation.match_citation import MatchCitation
 
 class ApplicationConfig():
     def __init__(self):
@@ -61,7 +60,7 @@ class RagApplication():
             except:
                 pass
         print("chunking for paragraphs")
-        for paragraphs in all_paragraphs:
+        for paragraphs in tqdm(all_paragraphs,desc="chunking"):
             # 确保paragraphs是list，并处理其中的元素
             if isinstance(paragraphs, list) and paragraphs:
                 if isinstance(paragraphs[0], dict):
@@ -100,15 +99,25 @@ class RagApplication():
 
 # ========================== Config Start====================
 app_config = ApplicationConfig()
-app_config.docs_path = r"/data/users/searchgpt/yq/TrustRAG/data/docs"
-app_config.llm_model_path = r"/data/users/searchgpt/pretrained_models/Qwen3-4B"
+# app_config.docs_path = r"/data/users/searchgpt/yq/TrustRAG/data/docs"
+# app_config.llm_model_path = r"/data/users/searchgpt/pretrained_models/Qwen3-4B"
+# retriever_config = DenseRetrieverConfig(
+#     model_name_or_path=r"/data/users/searchgpt/pretrained_models/bge-large-zh-v1.5",
+#     dim=1024,
+#     index_path=r'/data/users/searchgpt/yq/TrustRAG/examples/retrievers/dense_cache'
+# )
+# rerank_config = BgeRerankerConfig(
+#     model_name_or_path=r"/data/users/searchgpt/pretrained_models/bge-reranker-large"
+# )
+app_config.docs_path = r"data/docs"
+app_config.llm_model_path = r"G:\pretrained_models\llm\Qwen3-4B"
 retriever_config = DenseRetrieverConfig(
-    model_name_or_path=r"/data/users/searchgpt/pretrained_models/bge-large-zh-v1.5",
+    model_name_or_path=r"G:\pretrained_models\mteb\bge-large-zh-v1.5",
     dim=1024,
-    index_path=r'/data/users/searchgpt/yq/TrustRAG/examples/retrievers/dense_cache'
+    index_path=r'examples/retrievers/dense_cache'
 )
 rerank_config = BgeRerankerConfig(
-    model_name_or_path=r"/data/users/searchgpt/pretrained_models/bge-reranker-large"
+    model_name_or_path=r"G:\pretrained_models\mteb\bge-reranker-large"
 )
 
 app_config.retriever_config = retriever_config
@@ -394,11 +403,12 @@ def predict(question,
 
     else:
         # Handle RAG mode
-        loguru.logger.info('RAG Mode:')
+        loguru.logger.info('RAG Mode AND Answering')
         response, _, contents, rewrite_query = application.chat(
             question=question,
             top_k=top_k,
         )
+        loguru.logger.info(f"User Question: {response}")
         history.append((question, response))
         # Format search results
         for idx, source in enumerate(contents):
