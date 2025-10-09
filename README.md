@@ -98,7 +98,7 @@ python pipeline.py
 1. Create a conda environment (optional)
 
 ```shell
-conda create -n trustrag python=3.9
+conda create -n trustrag python=3.12.0
 conda activate trustrag
 ```
 

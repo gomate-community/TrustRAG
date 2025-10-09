@@ -1,8 +1,6 @@
 from setuptools import setup, find_packages
-try:
-    from trustrag.version import __version__
-except ImportError:
-    __version__ = "unknown version"
+
+__version__ = "0.15.0"
 
 # 读取 requirements.txt 文件中的内容
 with open('requirements.txt') as f:
@@ -21,5 +19,5 @@ setup(
     long_description=open('README.md','r',encoding="utf-8").read(),
     long_description_content_type='text/markdown',
     url="https://github.com/gomate-community/TrustRAG",
-    python_requires='>=3.9',
+    python_requires='>=3.11.0',
 )
