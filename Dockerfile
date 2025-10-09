@@ -34,3 +34,5 @@ RUN pip config set global.index-url https://mirrors.tuna.tsinghua.edu.cn/pypi/we
 
 COPY requirements.txt /workspace
 RUN pip install -r requirements.txt --no-cache
+# 安装nltk数据包
+RUN python -m nltk.downloader punkt_tab  punkt wordnet

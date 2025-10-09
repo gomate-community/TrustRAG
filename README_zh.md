@@ -107,7 +107,7 @@ python pipeline.py
 1. 创建conda环境（可选）
 
 ```sehll
-conda create -n trustrag python=3.9
+conda create -n trustrag python=3.12.0
 conda activate trustrag
 ```
 
