@@ -387,15 +387,14 @@ def predict(question,
         for search_result in results:
             web_content += search_result['title'] + " " + search_result['body'] + "\n"
     search_text = ''
+    history.append({"role": "user", "content": question})
+    loguru.logger.info(f"User Question: {response}")
     if use_pattern == 'Only LLM':
         # Handle model Q&A mode
         loguru.logger.info('Only LLM Mode:')
-
         # result = application.llm.chat(query=question, web_content=web_content)
         # 调用 chat 方法进行对话
         result, total_tokens = application.llm.chat(prompt=question, history=history,llm_only=True)
-        user_input ={"role": "user", "content": question}
-        history.append(user_input)
         history.append({"role":"assistant","content":result})
         search_text += web_content
         loguru.logger.info('Only LLM result:',result)
@@ -416,8 +415,6 @@ def predict(question,
         )
         # Filfer thinking
         response = remove_think_blocks(response)
-        loguru.logger.info(f"User Question: {response}")
-        history.append({"role": "user", "content": question})
         history.append({"role":"assistant","content":response})
         # Format search results
         for idx, source in enumerate(contents):

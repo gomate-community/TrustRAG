@@ -320,18 +320,17 @@ def predict(question,
         for search_result in results:
             web_content += search_result['title'] + " " + search_result['body'] + "\n"
     search_text = ''
+    history.append({"role": "user", "content": question})
     if use_pattern == 'Only LLM':
         # Handle model Q&A mode
         loguru.logger.info('Only LLM Mode:')
 
         # result = application.llm.chat(query=question, web_content=web_content)
         system_prompt = "You are a helpful assistant."
-        user_input = [
-            {"role": "user", "content": question}
-        ]
+        
         # 调用 chat 方法进行对话
-        result, total_tokens = application.llm.chat(system=system_prompt, history=user_input)
-        history.append((question, result))
+        result, total_tokens = application.llm.chat(system=system_prompt, history=history)
+        history.append({"role":"system", "content":result})
         search_text += web_content
 
         # Return empty judge results for Q&A mode
@@ -349,7 +348,7 @@ def predict(question,
             question=question,
             top_k=top_k,
         )
-        history.append((question, response))
+        history.append({"role":"system", "content":response})
         # Format search results
         for idx, source in enumerate(contents):
             sep = f'----------【搜索结果{idx + 1}：】---------------\n'
