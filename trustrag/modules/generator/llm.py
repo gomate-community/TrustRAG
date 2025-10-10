@@ -343,14 +343,19 @@ class Qwen3Chat(BaseModel):
         generated_ids = self.model.generate(
             **model_inputs,
             max_new_tokens=32768,  # 支持更大的生成长度
-            do_sample=False,
-            top_k=10
+            # do_sample=False,
+            # top_k=10
         )
 
         # 提取生成的部分
         output_ids = generated_ids[0][len(model_inputs.input_ids[0]):].tolist()
-        response = self.tokenizer.decode(output_ids, skip_special_tokens=True)
+        try:
+            # rindex finding 151668 (</think>)
+            index = len(output_ids) - output_ids[::-1].index(151668)
+        except ValueError:
+            index = 0
 
+        response = self.tokenizer.decode(output_ids[index:], skip_special_tokens=True).strip("\n")
         return response, history
 
     def load_model(self):
