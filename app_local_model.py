@@ -639,7 +639,7 @@ with gr.Blocks(theme="soft") as demo:
                         # gr.Markdown("Document Judge")
                         checkbox_outputs = [gr.Checkbox(visible=False, interactive=True) for _ in range(5)]
                 with gr.Row():
-                    search = gr.Textbox(label='Claim Attribute')
+                    search = gr.Textbox(label='Claim Attribute', lines=6)
 
             # submit
             send.click(predict,
