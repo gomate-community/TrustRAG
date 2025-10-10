@@ -17,7 +17,7 @@ jobs:
     - name: Setup Python version
       uses: actions/setup-python@v1
       with:
-        python-version: 3.8.18
+        python-version: 3.12.11
         
     - name: Install requirements
       run: make init
