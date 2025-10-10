@@ -19,6 +19,7 @@ import pandas as pd
 from datetime import datetime
 import pytz
 from tqdm import tqdm
+import re
 
 from trustrag.modules.document.common_parser import CommonParser
 from trustrag.modules.document.chunk import TextChunker
@@ -354,6 +355,15 @@ def on_file_select(files_df, chunk_size, evt: gr.SelectData):
 def clear_session():
     return '', None
 
+def remove_think_blocks(s: str) -> str:
+    # 删除 <think ...> 到 </think> 之间的所有内容（非贪婪，跨行，多处）
+    return re.sub(
+        r"<think\b[^>]*>.*?</think>",   # 允许 <think> 带属性
+        "",
+        s,
+        flags=re.IGNORECASE | re.DOTALL
+    ).strip()
+
 
 def shorten_label(text, max_length=10):
     if len(text) > 2 * max_length:
@@ -362,8 +372,6 @@ def shorten_label(text, max_length=10):
 
 
 def predict(question,
-            large_language_model,
-            embedding_model,
             top_k,
             use_web,
             use_pattern,
@@ -384,15 +392,13 @@ def predict(question,
         loguru.logger.info('Only LLM Mode:')
 
         # result = application.llm.chat(query=question, web_content=web_content)
-        system_prompt = "You are a helpful assistant."
-        user_input = [
-            {"role": "user", "content": question}
-        ]
         # 调用 chat 方法进行对话
-        result, total_tokens = application.llm.chat(system=system_prompt, history=user_input)
-        history.append((question, result))
+        result, total_tokens = application.llm.chat(prompt=question, history=history,llm_only=True)
+        user_input ={"role": "user", "content": question}
+        history.append(user_input)
+        history.append({"role":"assistant","content":result})
         search_text += web_content
-
+        loguru.logger.info('Only LLM result:',result)
         # Return empty judge results for Q&A mode
         checkboxes = []
         for item in range(5):
@@ -408,8 +414,11 @@ def predict(question,
             question=question,
             top_k=top_k,
         )
+        # Filfer thinking
+        response = remove_think_blocks(response)
         loguru.logger.info(f"User Question: {response}")
-        history.append((question, response))
+        history.append({"role": "user", "content": question})
+        history.append({"role":"assistant","content":response})
         # Format search results
         for idx, source in enumerate(contents):
             sep = f'----------【搜索结果{idx + 1}：】---------------\n'
@@ -611,7 +620,8 @@ with gr.Blocks(theme="soft") as demo:
                 )
             with gr.Column(scale=4):
                 with gr.Row():
-                    chatbot = gr.Chatbot(label='TrustRAG Application', height=650)
+                    chatbot = gr.Chatbot([{"role": "assistant", "content": "Hi~ I am your  assistant. I'm glad to serve you."}],
+                                         label='TrustRAG Application', height=650, type="messages")
                 with gr.Row():
                     message = gr.Textbox(label='Please enter a question')
                 with gr.Row():
@@ -635,8 +645,6 @@ with gr.Blocks(theme="soft") as demo:
             send.click(predict,
                        inputs=[
                            message,
-                           large_language_model,
-                           embedding_model,
                            top_k,
                            use_web,
                            use_pattern,
@@ -653,8 +661,6 @@ with gr.Blocks(theme="soft") as demo:
             message.submit(predict,
                            inputs=[
                                message,
-                               large_language_model,
-                               embedding_model,
                                top_k,
                                use_web,
                                use_pattern,

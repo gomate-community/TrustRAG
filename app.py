@@ -551,7 +551,8 @@ with gr.Blocks(theme="soft") as demo:
                 )
             with gr.Column(scale=4):
                 with gr.Row():
-                    chatbot = gr.Chatbot(label='TrustRAG Application', height=650)
+                    chatbot = gr.Chatbot([{"role": "assistant", "content": "Hi~ I am your  assistant. I'm glad to serve you."}],
+                                         label='TrustRAG Application', height=650, type="messages")
                 with gr.Row():
                     message = gr.Textbox(label='Please enter a question')
                 with gr.Row():
