@@ -19,6 +19,7 @@ import pandas as pd
 from datetime import datetime
 import pytz
 from tqdm import tqdm
+import re
 
 from trustrag.modules.document.common_parser import CommonParser
 from trustrag.modules.document.chunk import TextChunker
@@ -354,6 +355,15 @@ def on_file_select(files_df, chunk_size, evt: gr.SelectData):
 def clear_session():
     return '', None
 
+def remove_think_blocks(s: str) -> str:
+    # 删除 <think ...> 到 </think> 之间的所有内容（非贪婪，跨行，多处）
+    return re.sub(
+        r"<think\b[^>]*>.*?</think>",   # 允许 <think> 带属性
+        "",
+        s,
+        flags=re.IGNORECASE | re.DOTALL
+    ).strip()
+
 
 def shorten_label(text, max_length=10):
     if len(text) > 2 * max_length:
@@ -362,8 +372,6 @@ def shorten_label(text, max_length=10):
 
 
 def predict(question,
-            large_language_model,
-            embedding_model,
             top_k,
             use_web,
             use_pattern,
@@ -379,20 +387,17 @@ def predict(question,
         for search_result in results:
             web_content += search_result['title'] + " " + search_result['body'] + "\n"
     search_text = ''
+    history.append({"role": "user", "content": question})
+    loguru.logger.info(f"User Question: {response}")
     if use_pattern == 'Only LLM':
         # Handle model Q&A mode
         loguru.logger.info('Only LLM Mode:')
-
         # result = application.llm.chat(query=question, web_content=web_content)
-        system_prompt = "You are a helpful assistant."
-        user_input = [
-            {"role": "user", "content": question}
-        ]
         # 调用 chat 方法进行对话
-        result, total_tokens = application.llm.chat(system=system_prompt, history=user_input)
-        history.append((question, result))
+        result, total_tokens = application.llm.chat(prompt=question, history=history,llm_only=True)
+        history.append({"role":"assistant","content":result})
         search_text += web_content
-
+        loguru.logger.info('Only LLM result:',result)
         # Return empty judge results for Q&A mode
         checkboxes = []
         for item in range(5):
@@ -408,8 +413,9 @@ def predict(question,
             question=question,
             top_k=top_k,
         )
-        loguru.logger.info(f"User Question: {response}")
-        history.append((question, response))
+        # Filfer thinking
+        response = remove_think_blocks(response)
+        history.append({"role":"assistant","content":response})
         # Format search results
         for idx, source in enumerate(contents):
             sep = f'----------【搜索结果{idx + 1}：】---------------\n'
@@ -611,7 +617,8 @@ with gr.Blocks(theme="soft") as demo:
                 )
             with gr.Column(scale=4):
                 with gr.Row():
-                    chatbot = gr.Chatbot(label='TrustRAG Application', height=650)
+                    chatbot = gr.Chatbot([{"role": "assistant", "content": "Hi~ I am your  assistant. I'm glad to serve you."}],
+                                         label='TrustRAG Application', height=650, type="messages")
                 with gr.Row():
                     message = gr.Textbox(label='Please enter a question')
                 with gr.Row():
@@ -629,14 +636,12 @@ with gr.Blocks(theme="soft") as demo:
                         # gr.Markdown("Document Judge")
                         checkbox_outputs = [gr.Checkbox(visible=False, interactive=True) for _ in range(5)]
                 with gr.Row():
-                    search = gr.Textbox(label='Claim Attribute')
+                    search = gr.Textbox(label='Claim Attribute', lines=6)
 
             # submit
             send.click(predict,
                        inputs=[
                            message,
-                           large_language_model,
-                           embedding_model,
                            top_k,
                            use_web,
                            use_pattern,
@@ -653,8 +658,6 @@ with gr.Blocks(theme="soft") as demo:
             message.submit(predict,
                            inputs=[
                                message,
-                               large_language_model,
-                               embedding_model,
                                top_k,
                                use_web,
                                use_pattern,
