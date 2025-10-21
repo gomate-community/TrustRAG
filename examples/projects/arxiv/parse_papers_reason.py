@@ -1,14 +1,8 @@
 import logging
 import os
-
-import torch
-from magic_pdf.config.enums import SupportedPdfParseMethod
-from magic_pdf.data.data_reader_writer import FileBasedDataWriter, FileBasedDataReader
-from magic_pdf.data.dataset import PymuDocDataset
-from magic_pdf.model.doc_analyze_by_custom_model import doc_analyze
+import sys
+from trustrag.modules.document.pdf_mineru_parser import MineruParser
 from tqdm import tqdm
-
-print(torch.cuda.is_available())
 
 # Configure logging
 logging.basicConfig(
@@ -21,7 +15,7 @@ logger = logging.getLogger('pdf_processor')
 
 def process_pdf(pdf_path, output_dir):
     """
-    Process a PDF file and generate various output files.
+    Process a PDF file using MineruParser and generate various output files.
 
     Args:
         pdf_path: Path to the PDF file
@@ -32,90 +26,69 @@ def process_pdf(pdf_path, output_dir):
 
     logger.info(f"Processing PDF: {pdf_filename}")
 
-    # Prepare directory structure
-    images_dir_path = os.path.join(output_dir, "images")
-    images_dir_name = os.path.basename(images_dir_path)
+    # 初始化MineruParser
+    parser = MineruParser(
+        lang=['ch', 'en'],  # 支持中文和英文
+        parse_method='auto',  # 自动选择解析方法
+        formula_enable=True,  # 启用公式解析
+        table_enable=True     # 启用表格解析
+    )
 
-    os.makedirs(images_dir_path, exist_ok=True)
-    logger.debug(f"Created images directory: {images_dir_path}")
+    try:
+        # 使用MineruParser处理PDF
+        result = parser.process_single_pdf(
+            pdf_path=pdf_path,
+            output_dir=output_dir,
+            generate_visualizations=True,  # 生成可视化文件
+            target_lang='en'  # 使用英文作为目标语言
+        )
 
-    # Initialize file writers
-    image_writer = FileBasedDataWriter(images_dir_path)
-    md_writer = FileBasedDataWriter(output_dir)
+        if result["status"] == "success":
+            logger.info(f"Successfully processed {pdf_filename}")
+            
+            # 将content.md重命名为{base_filename}.md
+            original_md_path = os.path.join(output_dir, "content.md")
+            new_md_path = os.path.join(output_dir, f"{base_filename}.md")
+            
+            if os.path.exists(original_md_path):
+                import shutil
+                shutil.move(original_md_path, new_md_path)
+                logger.info(f"Created markdown file: {base_filename}.md")
+        else:
+            logger.error(f"Failed to process {pdf_filename}: {result.get('error', 'Unknown error')}")
+            raise Exception(result.get('error', 'Unknown error'))
 
-    # Read PDF content
-    pdf_reader = FileBasedDataReader("")
-    pdf_bytes = pdf_reader.read(pdf_path)
-    logger.debug(f"Read {len(pdf_bytes)} bytes from {pdf_filename}")
-
-    # Process PDF
-    dataset = PymuDocDataset(pdf_bytes)
-    pdf_type = dataset.classify()
-    logger.info(f"Detected PDF type: {pdf_type}")
-
-    # Apply appropriate processing based on PDF type
-    if pdf_type == SupportedPdfParseMethod.OCR:
-        logger.info(f"Using OCR mode for {pdf_filename}")
-        inference_result = dataset.apply(doc_analyze, ocr=True)
-        processing_result = inference_result.pipe_ocr_mode(image_writer)
-    else:
-        logger.info(f"Using text mode for {pdf_filename}")
-        inference_result = dataset.apply(doc_analyze, ocr=False)
-        processing_result = inference_result.pipe_txt_mode(image_writer)
-
-    # Generate output files
-    logger.debug("Generating output files")
-    model_pdf_path = os.path.join(output_dir, "model.pdf")
-    inference_result.draw_model(model_pdf_path)
-    logger.debug(f"Created model visualization: {model_pdf_path}")
-
-    model_inference_result = inference_result.get_infer_res()
-
-    layout_pdf_path = os.path.join(output_dir, "layout.pdf")
-    processing_result.draw_layout(layout_pdf_path)
-    logger.debug(f"Created layout visualization: {layout_pdf_path}")
-
-    spans_pdf_path = os.path.join(output_dir, "spans.pdf")
-    processing_result.draw_span(spans_pdf_path)
-    logger.debug(f"Created spans visualization: {spans_pdf_path}")
-
-    # Generate markdown content
-    markdown_content = processing_result.get_markdown(images_dir_name)
-    markdown_path = f"{base_filename}.md"
-    processing_result.dump_md(md_writer, markdown_path, images_dir_name)
-    logger.info(f"Created markdown file: {markdown_path}")
-
-    # Generate content list
-    content_list = processing_result.get_content_list(images_dir_name)
-    processing_result.dump_content_list(md_writer, "content_list.json", images_dir_name)
-    logger.debug("Created content list JSON")
-
-    # Generate middle JSON
-    middle_json = processing_result.get_middle_json()
-    processing_result.dump_middle_json(md_writer, "middle.json")
-    logger.debug("Created middle JSON file")
-
-    logger.info(f"Successfully processed {pdf_filename}")
+    except Exception as e:
+        logger.error(f"Error processing {pdf_filename}: {str(e)}")
+        raise
 
 
 def main():
     """Main function to process PDFs across all topic directories."""
-    logger.info("Starting PDF processing")
+    logger.info("Starting PDF processing with MineruParser")
     total_pdfs = 0
     processed_pdfs = 0
-    pdfs_dir="G:/BaiduNetdiskDownload/Downloader/downloads/pdfs"
+    pdfs_dir = "G:/BaiduNetdiskDownload/Downloader/downloads/pdfs"
+    
+    if not os.path.exists(pdfs_dir):
+        logger.error(f"Directory not found: {pdfs_dir}")
+        return
+    
     pdf_files = [f for f in os.listdir(pdfs_dir) if f.endswith(".pdf")]
     total_pdfs += len(pdf_files)
 
-    logger.info(f"Processing :  ({len(pdf_files)} PDFs found)")
+    logger.info(f"Processing: ({len(pdf_files)} PDFs found)")
 
-    for pdf_file in tqdm(pdf_files, desc=f"Processing"):
+    for pdf_file in tqdm(pdf_files, desc="Processing"):
         base_filename = os.path.splitext(pdf_file)[0]
 
+        # 只检查{base_filename}.md文件是否存在
         md_file = os.path.join(pdfs_dir, "output", base_filename, f"{base_filename}.md")
+        
         if os.path.exists(md_file):
             print("PDF Processed Continue！")
             continue
+            
         pdf_path = os.path.join(pdfs_dir, pdf_file)
         output_dir = os.path.join(pdfs_dir, "output", base_filename)
 
@@ -127,8 +100,8 @@ def main():
         except Exception as e:
             logger.error(f"Error processing {pdf_file}: {str(e)}")
 
-
     logger.info(f"PDF processing complete. Processed {processed_pdfs}/{total_pdfs} files.")
+
 
 if __name__ == "__main__":
     main()
