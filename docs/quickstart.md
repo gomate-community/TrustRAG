@@ -1,4 +1,4 @@
-## GoMate快速上手教程
+## TrustRAG快速上手教程
 
 ## 🛠️ 安装
 
@@ -22,7 +22,7 @@ pip install gomate
 1. 下载源码
 
 ```shell
-git clone https://github.com/gomate-community/GoMate.git
+git clone https://github.com/gomate-community/TrustRAG.git
 ```
 
 2. 安装依赖
