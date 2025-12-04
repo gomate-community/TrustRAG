@@ -301,16 +301,16 @@ if __name__ == '__main__':
 
     # 处理单个PDF（使用中文）
     result = parser.process_single_pdf(
-        pdf_path="../temp/20250605-Qwen3 Embedding Advancing Text Embedding and.pdf",
+        pdf_path=r"G:\BaiduNetdiskDownload\Downloader\downloads\pdfs\1806.06034.pdf",
         output_dir="../output/document",
         generate_visualizations=True,
         target_lang='ch'
     )
 
-    # 批量处理PDF（使用英文）
-    batch_result = parser.process_batch_pdfs(
-        pdfs_dir="../temp/",
-        output_base_dir="../output/",
-        skip_existing=True,
-        target_lang='en'
-    )
+    # # 批量处理PDF（使用英文）
+    # batch_result = parser.process_batch_pdfs(
+    #     pdfs_dir="../temp/",
+    #     output_base_dir="../output/",
+    #     skip_existing=True,
+    #     target_lang='en'
+    # )
