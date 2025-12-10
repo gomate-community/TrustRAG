@@ -11,16 +11,17 @@
 """
 import loguru
 from fastapi import APIRouter
-from trustrag.config.config_loader import config
+from trustrag.config.config_loader import ConfigLoader
 from api.rag.apps.core.judge.bodys import JudgeBody
 from api.rag.apps.handle.response.json_response import ApiResponse
 from trustrag.modules.judger.bge_judger import BgeJudger, BgeJudgerConfig
 from trustrag.modules.judger.chatgpt_judger import OpenaiJudger, OpenaiJudgerConfig
 
 judge_router = APIRouter()
-
+# 使用本地配置文件初始化配置加载器（单例）
+config = ConfigLoader(config_path="config_local.json")
 # 加载服务和模型配置
-llm_service = config.get_config('services.dmx')
+llm_service = config.get_config('services.gomall')
 llm_model = config.get_config('models.llm')
 rerank_model = config.get_config('models.reranker')
 
