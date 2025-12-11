@@ -1,7 +1,7 @@
 import time
 from typing import List, Any
 
-import requests
+from openai import OpenAI
 from tqdm import tqdm
 
 from trustrag.modules.judger.base import BaseJudger
@@ -37,8 +37,11 @@ class OpenaiJudger(BaseJudger):
     def __init__(self, config):
         super().__init__()
         self.config = config
-        self.base_url = config.base_url
-        self.api_key = config.api_key
+        self.client = OpenAI(
+            base_url=config.base_url,
+            api_key=config.api_key or "",
+            timeout=30,
+        )
         self.model_name = config.model_name
         print('成功初始化 ChatGPT 判断器')
 
@@ -58,31 +61,18 @@ class OpenaiJudger(BaseJudger):
         注意：只返回 1 或 0，不解释原因，不输出其他内容。
         """
 
-        headers = {
-            "Content-Type": "application/json",
-            "Authorization": f"Bearer {self.api_key}"
-        }
-
         results = []
         for doc in tqdm(documents, desc="判断文档相关性"):
-            data = {
-                "model": self.model_name,
-                "messages": [
-                    {"role": "system", "content": system_prompt},
-                    {"role": "user", "content": f"查询：{query}\n\n文章：{doc}"}
-                ]
-            }
-
             try:
-                response = requests.post(
-                    self.base_url + "/chat/completions",
-                    headers=headers,
-                    json=data,
-                    timeout=30
+                completion = self.client.chat.completions.create(
+                    model=self.model_name,
+                    messages=[
+                        {"role": "user", "content": system_prompt+f"查询：{query}\n\n文章：{doc}"},
+                    ],
+                    temperature=0.0,
                 )
-                response.raise_for_status()
-                result = response.json()
-                score = float(result['choices'][0]['message']['content'].strip())
+                result_text = completion.choices[0].message.content.strip()
+                score = float(result_text)
                 results.append({"text": doc, "score": score})
             except Exception as e:
                 print(f"调用 LLM 服务失败: {str(e)}")

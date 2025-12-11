@@ -11,31 +11,26 @@
 """
 import loguru
 from fastapi import APIRouter
-from trustrag.config.config_loader import ConfigLoader
+
+from api.rag.apps.config import settings
 from api.rag.apps.core.judge.bodys import JudgeBody
 from api.rag.apps.handle.response.json_response import ApiResponse
 from trustrag.modules.judger.bge_judger import BgeJudger, BgeJudgerConfig
 from trustrag.modules.judger.chatgpt_judger import OpenaiJudger, OpenaiJudgerConfig
 
 judge_router = APIRouter()
-# 使用本地配置文件初始化配置加载器（单例）
-config = ConfigLoader(config_path="config_local.json")
-# 加载服务和模型配置
-llm_service = config.get_config('services.gomall')
-llm_model = config.get_config('models.llm')
-rerank_model = config.get_config('models.reranker')
 
 # BGE 判断器配置
 judge_config = BgeJudgerConfig(
-    model_name_or_path=rerank_model['name']
+    model_name_or_path=settings.reranker_name,
 )
 bge_judger = BgeJudger(judge_config)
 
 # LLM 判断器配置
 judger_config = OpenaiJudgerConfig(
-    base_url=llm_service['base_url'],
-    api_key=llm_service['api_key'],
-    model_name=llm_model['name']
+    base_url=settings.gomall_base_url,
+    api_key=settings.gomall_api_key,
+    model_name=settings.llm_name,
 )
 openai_judger = OpenaiJudger(judger_config)
 

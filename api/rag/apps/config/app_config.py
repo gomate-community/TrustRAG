@@ -1,20 +1,9 @@
 #!/usr/bin/env python
 # -*- coding:utf-8 _*-
 """
-@author:quincy qiang
-@license: Apache Licence
-@file: app_config.py.py
-@time: 2024/06/13
-@contact: yanqiangmiffy@gamil.com
-@software: PyCharm
-@description: coding..
+应用基础配置。
 """
-import pprint
-from typing import ClassVar
-
-pp = pprint.PrettyPrinter(indent=4)
-
-
+from api.rag.apps.config import settings
 class AppConfig:
     """配置类"""
     API_V1_STR: str = ""
@@ -37,13 +26,13 @@ class AppConfig:
         {"url": "/v2", "description": "测试地址"},
     ]
 
-    WEB_URL: ClassVar[str] = '*'
+    WEB_URL: str = '*'
     # 接口地址
-    API_URL: ClassVar[str] = 'http://127.0.0.1:10001'
+    API_URL: str = settings.api_url
     # 运行访问的地址
-    API_HOST: ClassVar[str] = '0.0.0.0'
+    API_HOST: str = settings.api_host
     # 端口
-    API_PORT: int = 10000
+    API_PORT: int = settings.api_port
 
     DEBUGGER: bool = True
 

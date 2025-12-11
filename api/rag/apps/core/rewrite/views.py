@@ -12,15 +12,18 @@
 import loguru
 from fastapi import APIRouter
 
+from api.rag.apps.config import settings
 from api.rag.apps.core.rewrite.bodys import RewriteBody
 from api.rag.apps.handle.response.json_response import ApiResponse
-from trustrag.modules.rewriter.openai_rewrite import OpenaiRewriter,OpenaiRewriterConfig
+from trustrag.modules.rewriter.openai_rewrite import OpenaiRewriter, OpenaiRewriterConfig
 
 
 rewriter_router = APIRouter()
 
 rewriter_config = OpenaiRewriterConfig(
-    api_url="http://10.208.63.29:8888"
+    base_url=settings.rewriter_api_url,
+    api_key=settings.gomall_api_key,
+    model_name=settings.llm_name,
 )
 openai_rewriter = OpenaiRewriter(rewriter_config)
 

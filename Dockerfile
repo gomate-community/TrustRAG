@@ -1,5 +1,5 @@
 # Use the official Ubuntu base image
-FROM pytorch/pytorch:2.6.0-cuda12.6-cudnn9-runtime
+FROM pytorch/pytorch:2.6.0-cuda12.6-cudnn9-devel
 ENV DEBIAN_FRONTEND=noninteractive
 ENV CUDA_DEVICE_ORDER=PCI_BUS_ID
 ENV PYTORCH_NVML_BASED_CUDA_CHECK=1
