@@ -12,25 +12,18 @@
 import loguru
 from fastapi import APIRouter
 
+from api.rag.apps.config import settings
 from api.rag.apps.core.rerank.bodys import RerankBody
 from api.rag.apps.core.rerank.models import Application
 from api.rag.apps.handle.response.json_response import UserNotFoundResponse, ApiResponse
 from trustrag.modules.reranker.bge_reranker import BgeReranker, BgeRerankerConfig
-from trustrag.config.config_loader import config
-
-# from apps.handle.exception.exception import MallException
-# from apps.core.config.models import LLMModel
-# from tortoise.contrib.pydantic import pydantic_model_creator
 
 rerank_router = APIRouter()
-# 从配置文件加载重排序配置
-rerank_service = config.get_config('services.rerank')
-rerank_model = config.get_config('models.reranker')
 
 reranker_config = BgeRerankerConfig(
-    model_name_or_path=rerank_model['name'],
-    api_key=rerank_service['api_key'],
-    url=rerank_service['base_url']
+    model_name_or_path=settings.reranker_name,
+    api_key=settings.rerank_api_key,
+    url=settings.rerank_base_url,
 )
 bge_reranker = BgeReranker(reranker_config)
 # Create

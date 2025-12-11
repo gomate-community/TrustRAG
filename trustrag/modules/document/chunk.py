@@ -107,6 +107,31 @@ class TextChunker:
 
         return sentence_parts
 
+    def _normalize_paragraphs(self, paragraphs: list) -> list[str]:
+        """
+        Normalize paragraphs into a list of strings.
+
+        Supports paragraphs passed as strings or dictionaries (e.g. {"title": ..., "content": ...}).
+        Falls back to str() for any other types to avoid runtime errors.
+        """
+        normalized = []
+        for p in paragraphs:
+            if isinstance(p, str):
+                normalized.append(p)
+            elif isinstance(p, dict):
+                # Prefer common text-bearing fields; join with newlines to preserve separation.
+                parts = []
+                for key in ("title", "content", "text", "body"):
+                    if key in p and p[key]:
+                        parts.append(str(p[key]))
+                if parts:
+                    normalized.append("\n".join(parts))
+                else:
+                    normalized.append(str(p))
+            else:
+                normalized.append(str(p))
+        return normalized
+
     def get_chunks(self, paragraphs: list[str], chunk_size: int) -> list[str]:
         """
         Splits a list of paragraphs into chunks based on a specified token size.
@@ -118,15 +143,18 @@ class TextChunker:
         Returns:
             list[str]: A list of text chunks, each containing sentences that fit within the token limit.
         """
+        # Normalize paragraphs to string list to handle dict inputs gracefully
+        normalized_paragraphs = self._normalize_paragraphs(paragraphs)
+
         # Combine paragraphs into a single text
-        text = ''.join(paragraphs)
+        text = ''.join(normalized_paragraphs)
 
         # Split the text into sentences
         sentences = self.split_sentences(text)
 
         # If no sentences are found, treat paragraphs as sentences
         if len(sentences) == 0:
-            sentences = paragraphs
+            sentences = normalized_paragraphs
 
         chunks = []
         current_chunk = []

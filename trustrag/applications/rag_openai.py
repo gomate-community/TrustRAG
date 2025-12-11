@@ -67,6 +67,12 @@ class RagApplication():
                 pass
         print("chunking for paragraphs")
         for paragraphs in all_paragraphs:
+            if paragraphs:
+                first_para = paragraphs[0]
+                if isinstance(first_para, dict):
+                    print(first_para.keys())
+                else:
+                    print(f"paragraph type: {type(first_para)}")
             chunks = self.tc.get_chunks(paragraphs, 256)
             all_chunks.extend(chunks)
         self.retriever.build_from_texts(all_chunks)

@@ -11,11 +11,10 @@
 """
 import os
 import sys
-
+from dotenv import load_dotenv
+load_dotenv()
 os.environ["TOKENIZERS_PARALLELISM"] = "false"
-sys.path.append('.')
-# sys.path.append('/data/users/searchgpt/yq/GoMate')
-sys.path.append('/data/users/searchgpt/yq/GoMate_dev')
+sys.path.append('../../')
 sys.path.append('/home/yanqiang/code')
 
 from apps.app import create_app
