@@ -1,64 +1,56 @@
 # Use the official Ubuntu base image
 FROM pytorch/pytorch:2.6.0-cuda12.6-cudnn9-devel
+
+# ==========================================
+# 第一阶段：系统级配置 (变动最少，放最前)
+# ==========================================
 ENV DEBIAN_FRONTEND=noninteractive
 ENV CUDA_DEVICE_ORDER=PCI_BUS_ID
 ENV PYTORCH_NVML_BASED_CUDA_CHECK=1
-ENV DEBIAN_FRONTEND=noninteractive
 ENV LANG C.UTF-8
 
-# Set environment variables to non-interactive to avoid prompts during installation
+# 1. 换源 (系统源)
+RUN sed -i "s@http://.*archive.ubuntu.com@https://mirrors.tuna.tsinghua.edu.cn@g" /etc/apt/sources.list \
+    && sed -i "s@http://.*security.ubuntu.com@https://mirrors.tuna.tsinghua.edu.cn@g" /etc/apt/sources.list
+
+# 2. 安装系统依赖 (这些非常耗时，但几乎不需要改，所以放前面缓存起来)
+# 合并 apt-get 指令以减少层数和体积
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    apt-utils \
+    build-essential \
+    vim net-tools procps lsof curl wget iputils-ping telnet lrzsz git \
+    libreoffice libmagic-dev \
+    gcc \
+    && rm -rf /var/lib/apt/lists/*
+    # rm -rf 是为了清理缓存减小体积
+
+# ==========================================
+# 第二阶段：Python 依赖 (变动偶尔)
+# ==========================================
+# 设置 pip 源
 RUN pip config set global.index-url https://mirrors.tuna.tsinghua.edu.cn/pypi/web/simple
 
-COPY requirements.txt /workspace
-RUN pip install -r requirements.txt --no-cache
+# 只有当 requirements.txt 变化时，才会触发下面的 pip install
+COPY requirements.txt /workspace/requirements.txt
+# 使用 --no-cache-dir 减小体积
+RUN pip install -r /workspace/requirements.txt --no-cache-dir
 
-# 使用阿里云镜像源加速apt-get
-#RUN sed -i 's@/archive.ubuntu.com/@/mirrors.aliyun.com/@g' /etc/apt/sources.list
-RUN sed -i "s@http://.*archive.ubuntu.com@https://mirrors.tuna.tsinghua.edu.cn@g" /etc/apt/sources.list
-RUN sed -i "s@http://.*security.ubuntu.com@https://mirrors.tuna.tsinghua.edu.cn@g" /etc/apt/sources.list
-#COPY sources.list /etc/apt/sources.list
-#ADD sources.list /etc/apt
-RUN apt-get clean
-
-# 安装常用依赖包
-RUN apt-get -q update \
-    && apt-get -q install -y --no-install-recommends \
-        apt-utils \
-        bats \
-        build-essential
-RUN apt-get update && apt-get install -y vim net-tools procps lsof curl wget iputils-ping telnet lrzsz git libreoffice libmagic-dev
-
-RUN apt-get update
-RUN apt-get install -y gcc
-RUN apt-get gcc --version
-RUN apt-get autoclean
-RUN rm -rf /var/lib/apt/lists/*
-
-# ----------------------------------------------------
-# 1. 补充缺失的静态资源
-# ----------------------------------------------------
+# ==========================================
+# 第三阶段：静态大文件 (变动偶尔)
+# ==========================================
 COPY nltk_data /root/nltk_data
 
-# ----------------------------------------------------
-# 2. 精确复制源代码 (拒绝复制乱七八糟的文件)
-# ----------------------------------------------------
-# 将本地的 api 目录复制到容器的 /app/api
+# ==========================================
+# 第四阶段：项目源代码 (变动最频繁，放最后)
+# ==========================================
+# 这样你改代码时，上面所有层都会直接用缓存，构建只需要 1 秒
 COPY api /app/api
-# 将本地的 trustrag 目录复制到容器的 /app/trustrag
 COPY trustrag /app/trustrag
 
-# ----------------------------------------------------
-# 3. 固化运行环境设置 (替代命令行参数)
-# ----------------------------------------------------
-# 设置环境变量 (替代 sh -c "PYTHONPATH=/app ...")
+# ==========================================
+# 第五阶段：运行配置
+# ==========================================
 ENV PYTHONPATH=/app
-
-# 设置工作目录 (替代 -w /app/api/rag)
-# 之后的所有 CMD 或 RUN 都会在这个目录下执行
 WORKDIR /app/api/rag
 
-# ----------------------------------------------------
-# 4. 设置默认启动命令
-# ----------------------------------------------------
-# 容器启动时默认执行该命令
 CMD ["python", "main.py"]
