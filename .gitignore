@@ -125,3 +125,4 @@ _static/
 _templates/
 
 api/agent/config.yaml
+nltk_data

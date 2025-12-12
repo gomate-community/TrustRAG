@@ -22,3 +22,13 @@ docker run --rm \
   -w /app/api/rag \
   trustrag:v0.1 \
   sh -c "PYTHONPATH=/app python main.py"
+
+docker run -itd --rm  \
+  --name=trustrag_api \
+  --gpus all \
+  -p 10000:10000 \
+  -v /mnt/g/pretrained_models/mteb/bge-reranker-large:/mnt/g/pretrained_models/mteb/bge-reranker-large \
+  -e RERANKER_NAME=/mnt/g/pretrained_models/mteb/bge-reranker-large \
+  trustrag:v0.3
+
+docker logs -f -t trustrag_api
