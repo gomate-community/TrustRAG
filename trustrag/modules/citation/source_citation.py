@@ -20,11 +20,11 @@ class SourceCitation:
         quote_pairs = {'"': '"', "'": "'", '「': '」', '『': '』'}
 
         sentences = []
-        current_sentence = ''
+        current_sentence = []  # Use list instead of string concatenation
         quote_stack = []
 
         for char in para:
-            current_sentence += char
+            current_sentence.append(char)
 
             # 处理引号
             if char in quote_pairs.keys():
@@ -37,20 +37,22 @@ class SourceCitation:
             if char in end_symbols and not quote_stack:
                 # 去除可能的空白符号
                 # sentence = current_sentence.strip()
-                sentence = current_sentence
+                sentence = ''.join(current_sentence)
                 if sentence:
                     sentences.append(sentence)
-                current_sentence = ''
+                current_sentence = []
 
         # 处理末尾可能剩余的文本
         if current_sentence:
-            sentences.append(current_sentence)
+            sentences.append(''.join(current_sentence))
 
         return sentences
 
     def remove_stopwords(self, query: str):
-        for word in self.stopwords:
-            query = query.replace(word, " ")
+        # Use regex for more efficient multi-word replacement
+        if self.stopwords:
+            pattern = '|'.join(map(re.escape, self.stopwords))
+            query = re.sub(pattern, ' ', query)
         return query
 
     def extract_content(self, text):
@@ -121,7 +123,9 @@ class SourceCitation:
         number = int(number_str)  # 将输入的字符串转换为整数
         if number == 0:
             return digit_to_chinese['0']  # 直接处理 0 的情况
-        result = ""
+        
+        # Use list for efficient string building
+        result_parts = []
 
         # 处理 10 到 99 的数字
         if number >= 10 and number < 100:
@@ -130,17 +134,17 @@ class SourceCitation:
 
             # 处理十位数
             if tens > 1:
-                result += digit_to_chinese[str(tens)]  # 如果十位大于 1，需要显示数字
-            result += '十'  # 始终加上 "十" 表示十位
+                result_parts.append(digit_to_chinese[str(tens)])  # 如果十位大于 1，需要显示数字
+            result_parts.append('十')  # 始终加上 "十" 表示十位
 
             # 处理个位数
             if ones > 0:
-                result += digit_to_chinese[str(ones)]
+                result_parts.append(digit_to_chinese[str(ones)])
         else:
             # 处理个位数 (1-9)
-            result += digit_to_chinese[number_str]
+            result_parts.append(digit_to_chinese[number_str])
 
-        return result
+        return ''.join(result_parts)
 
     def highlight_common_substrings(self, sentence, evidence_sentence, evidence, min_length=6):
         evidence_sentences = self.cut(evidence)
@@ -151,12 +155,13 @@ class SourceCitation:
         return [[start_evidence, end_evidence - 1]]
 
     def format_text_data(self, data):
-        formatted_text = ""
+        # Use list comprehension for efficient string building
+        formatted_parts = []
         for i, item in enumerate(data):
             if i > 0:
-                formatted_text += "---\n\n"  # Add Markdown horizontal rule between groups
-            formatted_text += f"```\n{item['title']}\n{item['content']}\n```\n\n"
-        return formatted_text.strip()
+                formatted_parts.append("---\n\n")  # Add Markdown horizontal rule between groups
+            formatted_parts.append(f"```\n{item['title']}\n{item['content']}\n```\n\n")
+        return ''.join(formatted_parts).strip()
 
     def merge_groups(self, groups):
         """

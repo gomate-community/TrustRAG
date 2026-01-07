@@ -51,14 +51,15 @@ class ExcelParser:
             if not rows: continue
             ti = list(rows[0])
             for r in list(rows[1:]):
-                l = []
+                row_parts = []
                 for i, c in enumerate(r):
                     if not c.value:
                         continue
                     t = str(ti[i].value) if i < len(ti) else ""
-                    t += ("：" if t else "") + str(c.value)
-                    l.append(t)
-                l = "; ".join(l)
+                    # Build cell text efficiently
+                    cell_text = f"{t}：{c.value}" if t else str(c.value)
+                    row_parts.append(cell_text)
+                l = "; ".join(row_parts)
                 if sheetname.lower().find("sheet") < 0:
                     l += " ——" + sheetname
                 res.append(l)
