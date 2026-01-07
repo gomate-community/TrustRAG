@@ -105,6 +105,9 @@ class MatchCitation:
         contents = [{"content": sentence} for sentence in sentences]
         
         # Pre-tokenize all sentences to avoid redundant jieba.lcut calls
+        # Note: These caches are scoped to this function call and will be
+        # garbage collected after the function returns. For very large document
+        # sets (>10k sentences), consider implementing an LRU cache as a class variable.
         sentence_tokens_cache = {}
         for citation in contents:
             sentence = citation['content']

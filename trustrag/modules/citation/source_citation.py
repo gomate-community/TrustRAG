@@ -65,8 +65,6 @@ class SourceCitation:
         返回:
             tuple: (summary, list of dict)
         """
-        import re
-
         # 提取summary部分
         summary_pattern = r'"summary"\s*:\s*"([^"]+)"'
         summary_match = re.search(summary_pattern, text)
