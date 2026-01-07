@@ -25,11 +25,11 @@ class MatchCitation:
         quote_pairs = {'"': '"', "'": "'", '「': '」', '『': '』'}
 
         sentences = []
-        current_sentence = ''
+        current_sentence = []  # Use list instead of string concatenation
         quote_stack = []
 
         for char in para:
-            current_sentence += char
+            current_sentence.append(char)
 
             # 处理引号
             if char in quote_pairs.keys():
@@ -42,20 +42,22 @@ class MatchCitation:
             if char in end_symbols and not quote_stack:
                 # 去除可能的空白符号
                 # sentence = current_sentence.strip()
-                sentence = current_sentence
+                sentence = ''.join(current_sentence)
                 if sentence:
                     sentences.append(sentence)
-                current_sentence = ''
+                current_sentence = []
 
         # 处理末尾可能剩余的文本
         if current_sentence:
-            sentences.append(current_sentence)
+            sentences.append(''.join(current_sentence))
 
         return sentences
 
     def remove_stopwords(self, query: str):
-        for word in self.stopwords:
-            query = query.replace(word, " ")
+        # Use regex for more efficient multi-word replacement
+        if self.stopwords:
+            pattern = '|'.join(map(re.escape, self.stopwords))
+            query = re.sub(pattern, ' ', query)
         return query
 
     def highlight_common_substrings(self, sentence, evidence_sentence, evidence, min_length=6):
@@ -101,6 +103,25 @@ class MatchCitation:
         sentences = self.cut(response)
         # print(sentences)
         contents = [{"content": sentence} for sentence in sentences]
+        
+        # Pre-tokenize all sentences to avoid redundant jieba.lcut calls
+        # Note: These caches are scoped to this function call and will be
+        # garbage collected after the function returns. For very large document
+        # sets (>10k sentences), consider implementing an LRU cache as a class variable.
+        sentence_tokens_cache = {}
+        for citation in contents:
+            sentence = citation['content']
+            if sentence.strip():
+                sentence_tokens_cache[sentence] = set(jieba.lcut(self.remove_stopwords(sentence)))
+        
+        # Pre-tokenize all evidence sentences
+        evidence_tokens_cache = {}
+        for doc_idx, doc in enumerate(selected_docs):
+            evidence_sentences = self.cut(doc['content'])
+            for evidence_sentence in evidence_sentences:
+                if evidence_sentence.strip() and evidence_sentence not in evidence_tokens_cache:
+                    evidence_tokens_cache[evidence_sentence] = set(jieba.lcut(self.remove_stopwords(evidence_sentence)))
+        
         for cit_idx, citation in enumerate(contents):
             citation['citation_content'] = []
             citation['best_idx'] = []
@@ -108,17 +129,24 @@ class MatchCitation:
             citation['highlighted_start_end'] = []
             sentence = citation['content']
             # print("===================sentence", sentence)
-            # 答案内容进行分词
-            sentence_seg_cut = set(jieba.lcut(self.remove_stopwords(sentence)))
+            # 答案内容进行分词 - Use cached result
+            if not sentence.strip():
+                continue
+            sentence_seg_cut = sentence_tokens_cache.get(sentence, set())
             sentence_seg_cut_length = len(sentence_seg_cut)
+            if sentence_seg_cut_length == 0:
+                continue
             threshold = 0.5
             # 检索内容
             for doc_idx, doc in enumerate(selected_docs):
                 evidence_sentences = self.cut(doc['content'])
                 for es_idx, evidence_sentence in enumerate(evidence_sentences):
                     ## 可能存在空的片段
-                    if evidence_sentence.strip() and sentence.strip():
-                        evidence_seg_cut = set(jieba.lcut(self.remove_stopwords(evidence_sentence)))
+                    if evidence_sentence.strip():
+                        # Use cached tokenized evidence
+                        evidence_seg_cut = evidence_tokens_cache.get(evidence_sentence, set())
+                        if not evidence_seg_cut:
+                            continue
                         overlap = sentence_seg_cut.intersection(evidence_seg_cut)
                         ratio = len(overlap) / sentence_seg_cut_length
                         # print(sentence_seg_cut,evidence_seg_cut,ratio)
@@ -179,10 +207,19 @@ class MatchCitation:
 
                     merged_group_list = []
                     reference = group_list[0]
-                    reference_tokens = set(jieba.lcut(self.remove_stopwords(reference['chk_content'])))
+                    # Use cached tokens if available, otherwise tokenize
+                    reference_content = reference['chk_content']
+                    if reference_content in evidence_tokens_cache:
+                        reference_tokens = evidence_tokens_cache[reference_content]
+                    else:
+                        reference_tokens = set(jieba.lcut(self.remove_stopwords(reference_content)))
                     merged_group = [reference]
                     for item in group_list[1:]:
-                        item_tokens = set(jieba.lcut(self.remove_stopwords(item['chk_content'])))
+                        item_content = item['chk_content']
+                        if item_content in evidence_tokens_cache:
+                            item_tokens = evidence_tokens_cache[item_content]
+                        else:
+                            item_tokens = set(jieba.lcut(self.remove_stopwords(item_content)))
                         if len(reference_tokens.intersection(item_tokens)) > 5:
                             merged_group.append(item)
                         else:
