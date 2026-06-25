@@ -73,6 +73,7 @@ python pipeline.py
 **“Reliable input, Trusted output”**
 
 ## 🎉 Update Log
+- 🎬 **2026.6.25** Added **TwelveLabs** video integration: `Marengo` multimodal embeddings (512-dim, shared text/image/audio/video space) and `Pegasus` video understanding, see [examples/vectors/twelvelabs_embedding_example.py](examples/vectors/twelvelabs_embedding_example.py)
 - 📑 **2025.3.8** Supports **Deep Search**, enables slow thinking, and generates research reports.
 - 🌐 **2025.3.4** Added `websearch` engine for online searches, supporting **DuckDuck** and **Searxn**
 - 🐳 **2025.2.27** Added `Dockerfile`, enabling `Docker` deployment

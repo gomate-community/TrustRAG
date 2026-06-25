@@ -69,3 +69,4 @@ langdetect
 firecrawl
 playwright
 mineru
+twelvelabs>=1.2.8
