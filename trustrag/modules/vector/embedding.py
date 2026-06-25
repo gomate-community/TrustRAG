@@ -225,6 +225,158 @@ class CustomServerEmbedding(EmbeddingGenerator):
             return {"prompt_tokens": 0, "total_tokens": 0}
 
 
+class TwelveLabsEmbedding(EmbeddingGenerator):
+    """
+    Multimodal embeddings powered by TwelveLabs Marengo.
+
+    Marengo produces embeddings in a single 512-dimensional space that is
+    shared across text, image, audio and video. This means a text query and a
+    video clip can be compared directly with cosine similarity, which makes it
+    a natural fit for video-RAG: index your videos once, then retrieve them
+    with plain-text questions.
+
+    This class implements the standard ``generate_embeddings`` text interface
+    so it can be used as a drop-in ``EmbeddingGenerator`` for retrieval, and
+    additionally exposes ``embed_image``/``embed_audio`` for the other
+    modalities. Get a free API key at https://twelvelabs.io.
+    """
+
+    def __init__(
+            self,
+            api_key: Optional[str] = None,
+            model_name: str = "marengo3.0",
+    ):
+        """
+        Initialize the TwelveLabs Marengo embedding generator.
+
+        Args:
+            api_key (str): TwelveLabs API key. Falls back to the
+                ``TWELVELABS_API_KEY`` environment variable.
+            model_name (str): Marengo model to use (default ``marengo3.0``).
+        """
+        from twelvelabs import TwelveLabs
+
+        self.client = TwelveLabs(api_key=api_key or os.getenv("TWELVELABS_API_KEY"))
+        self.model_name = model_name
+        # Marengo embeddings are 512-dimensional and shared across modalities.
+        self.embedding_size = 512
+
+    @retry(wait=wait_random_exponential(min=1, max=20), stop=stop_after_attempt(6))
+    def _embed_text(self, text: str) -> List[float]:
+        response = self.client.embed.create(model_name=self.model_name, text=text)
+        return response.text_embedding.segments[0].float_
+
+    def generate_embeddings(self, texts: List[str]) -> np.ndarray:
+        """
+        Generate Marengo text embeddings for a list of texts.
+
+        Args:
+            texts (List[str]): List of text strings to embed.
+
+        Returns:
+            np.ndarray: Array of shape (len(texts), 512).
+        """
+        return np.array([self._embed_text(text) for text in texts])
+
+    @retry(wait=wait_random_exponential(min=1, max=20), stop=stop_after_attempt(6))
+    def embed_image(self, image_url: str) -> np.ndarray:
+        """
+        Embed an image into the shared 512-dim Marengo space.
+
+        Args:
+            image_url (str): Publicly accessible image URL.
+
+        Returns:
+            np.ndarray: Embedding vector with shape (512,).
+        """
+        response = self.client.embed.create(model_name=self.model_name, image_url=image_url)
+        return np.array(response.image_embedding.segments[0].float_)
+
+    @retry(wait=wait_random_exponential(min=1, max=20), stop=stop_after_attempt(6))
+    def embed_audio(self, audio_url: str) -> np.ndarray:
+        """
+        Embed audio into the shared 512-dim Marengo space.
+
+        Args:
+            audio_url (str): Publicly accessible audio URL.
+
+        Returns:
+            np.ndarray: Embedding vector with shape (512,).
+        """
+        response = self.client.embed.create(model_name=self.model_name, audio_url=audio_url)
+        return np.array(response.audio_embedding.segments[0].float_)
+
+
+class TwelveLabsVideoAnalyzer:
+    """
+    Video understanding powered by TwelveLabs Pegasus.
+
+    Given a video (by public URL, uploaded asset id, or base64 string), Pegasus
+    generates natural-language text describing the video. This is useful in a
+    RAG pipeline for turning videos into searchable/grounded text passages
+    (summaries, transcripts-with-context, answers to questions about a clip).
+
+    This is intentionally not an ``EmbeddingGenerator`` — it produces text, not
+    vectors. Get a free API key at https://twelvelabs.io.
+    """
+
+    def __init__(
+            self,
+            api_key: Optional[str] = None,
+            model_name: str = "pegasus1.5",
+    ):
+        """
+        Initialize the TwelveLabs Pegasus video analyzer.
+
+        Args:
+            api_key (str): TwelveLabs API key. Falls back to the
+                ``TWELVELABS_API_KEY`` environment variable.
+            model_name (str): Pegasus model to use (default ``pegasus1.5``).
+        """
+        from twelvelabs import TwelveLabs
+
+        self.client = TwelveLabs(api_key=api_key or os.getenv("TWELVELABS_API_KEY"))
+        self.model_name = model_name
+
+    def analyze(
+            self,
+            prompt: str,
+            video_url: Optional[str] = None,
+            video_id: Optional[str] = None,
+            asset_id: Optional[str] = None,
+            max_tokens: int = 2048,
+    ) -> str:
+        """
+        Generate text from a video for a given prompt.
+
+        Exactly one of ``video_url``, ``video_id`` or ``asset_id`` must be set.
+
+        Args:
+            prompt (str): Instruction, e.g. "Summarize this video".
+            video_url (str): Publicly accessible video URL.
+            video_id (str): Id of a video already indexed in TwelveLabs.
+            asset_id (str): Id of an uploaded TwelveLabs asset.
+            max_tokens (int): Maximum number of tokens to generate.
+
+        Returns:
+            str: The generated text.
+        """
+        from twelvelabs.types.video_context import VideoContext_AssetId, VideoContext_Url
+
+        kwargs: Dict = {"model_name": self.model_name, "prompt": prompt, "max_tokens": max_tokens}
+        if video_id is not None:
+            kwargs["video_id"] = video_id
+        elif video_url is not None:
+            kwargs["video"] = VideoContext_Url(url=video_url)
+        elif asset_id is not None:
+            kwargs["video"] = VideoContext_AssetId(asset_id=asset_id)
+        else:
+            raise ValueError("One of video_url, video_id or asset_id must be provided")
+
+        response = self.client.analyze(**kwargs)
+        return response.data
+
+
 class EmbeddingFactory:
     """
     工厂类，用于创建和管理不同类型的嵌入生成器。
@@ -282,6 +434,11 @@ class EmbeddingFactory:
                 api_key=kwargs.get('api_key'),
                 model=kwargs.get('model_name', 'text-embedding-v1')
             )
+        elif embedding_type == 'twelvelabs':
+            return TwelveLabsEmbedding(
+                api_key=kwargs.get('api_key'),
+                model_name=kwargs.get('model_name', 'marengo3.0')
+            )
         elif embedding_type == 'flag_model':
             return FlagModelEmbedding(
                 model_name=kwargs.get('model_name', 'BAAI/bge-base-en-v1.5'),
@@ -307,5 +464,6 @@ class EmbeddingFactory:
             'huggingface',
             'zhipu',
             'dashscope',
+            'twelvelabs',
             'flag_model'
         ]
