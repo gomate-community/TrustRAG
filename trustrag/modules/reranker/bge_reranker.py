@@ -62,9 +62,22 @@ class BgeReranker(BaseReranker):
         self.device = config.device
         print('Successful load rerank model')
 
-    def rerank(self, query: str, documents: List[str], k: int = 5, is_sorted: bool = True) -> list[dict[str, Any]]:
-        # Process input documents for uniqueness and formatting
-        # documents = list(set(documents))
+    def rerank(
+        self,
+        query: str,
+        documents: List[str],
+        k: int = 5,
+        is_sorted: bool = True,
+    ) -> list[dict[str, Any]]:
+        """Score documents and return the top-k results when sorting is enabled.
+
+        Score-only mode preserves the input order and returns every document.
+        """
+        if isinstance(k, bool) or not isinstance(k, int) or k < 1:
+            raise ValueError("k must be a positive integer")
+        if not documents:
+            return []
+
         pairs = [[query, d] for d in documents]
 
         # Tokenize and predict relevance scores
@@ -77,7 +90,7 @@ class BgeReranker(BaseReranker):
         if is_sorted:
             ranked_docs = sorted(zip(documents, scores), key=lambda x: x[1], reverse=True)
             # Return the top k documents
-            top_docs = [{'text': doc, 'score': score} for doc, score in ranked_docs]
+            top_docs = [{'text': doc, 'score': score} for doc, score in ranked_docs[:k]]
         else:
             top_docs = [{'text': doc, 'score': score} for doc, score in zip(documents, scores)]
         return top_docs
