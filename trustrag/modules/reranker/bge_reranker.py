@@ -25,16 +25,54 @@ class BgeRerankerConfig:
 
     Attributes:
         model_name_or_path (str): Path or model identifier for the pretrained model from Hugging Face's model hub.
-        device (str): Device to load the model onto ('cuda' or 'cpu').
+        device (str): Device to load the model onto (for example, 'cuda', 'mps', or 'cpu').
+        batch_size (int): Maximum number of query-document pairs per inference batch.
+        max_length (int): Maximum tokenized sequence length.
         api_key (str): API key for the reranker service.
         url (str): URL for the reranker service.
     """
 
-    def __init__(self, model_name_or_path='bert-base-uncased', api_key=None, url=None):
+    def __init__(
+        self,
+        model_name_or_path='bert-base-uncased',
+        api_key=None,
+        url=None,
+        device=None,
+        batch_size=32,
+        max_length=512,
+    ):
+        if (
+            isinstance(batch_size, bool)
+            or not isinstance(batch_size, int)
+            or batch_size < 1
+        ):
+            raise ValueError("batch_size must be a positive integer")
+        if (
+            isinstance(max_length, bool)
+            or not isinstance(max_length, int)
+            or max_length < 1
+        ):
+            raise ValueError("max_length must be a positive integer")
+
         self.model_name_or_path = model_name_or_path
-        self.device = 'cuda' if torch.cuda.is_available() else 'cpu'
+        self.device = device or self._default_device()
+        try:
+            torch.device(self.device)
+        except (RuntimeError, TypeError) as exc:
+            raise ValueError(f"Invalid device: {self.device}") from exc
+        self.batch_size = batch_size
+        self.max_length = max_length
         self.api_key = api_key
         self.url = url
+
+    @staticmethod
+    def _default_device():
+        if torch.cuda.is_available():
+            return 'cuda'
+        mps_backend = getattr(torch.backends, 'mps', None)
+        if mps_backend is not None and mps_backend.is_available():
+            return 'mps'
+        return 'cpu'
 
     def log_config(self):
         # Log the current configuration settings
@@ -42,6 +80,8 @@ class BgeRerankerConfig:
         BgeRerankerConfig:
             Model Name or Path: {self.model_name_or_path}
             Device: {self.device}
+            Batch Size: {self.batch_size}
+            Max Length: {self.max_length}
             URL: {self.url}
             API Key: {'*' * 8 if self.api_key else 'Not Set'}
         """
@@ -57,8 +97,12 @@ class BgeReranker(BaseReranker):
         super().__init__()
         self.config = config
         self.rerank_tokenizer = AutoTokenizer.from_pretrained(config.model_name_or_path)
-        self.rerank_model = AutoModelForSequenceClassification.from_pretrained(config.model_name_or_path) \
-            .half().to(config.device).eval()
+        self.rerank_model = AutoModelForSequenceClassification.from_pretrained(
+            config.model_name_or_path
+        )
+        if torch.device(config.device).type == 'cuda':
+            self.rerank_model = self.rerank_model.half()
+        self.rerank_model = self.rerank_model.to(config.device).eval()
         self.device = config.device
         print('Successful load rerank model')
 
@@ -78,13 +122,31 @@ class BgeReranker(BaseReranker):
         if not documents:
             return []
 
-        pairs = [[query, d] for d in documents]
+        scores = []
+        for start in range(0, len(documents), self.config.batch_size):
+            batch_documents = documents[start:start + self.config.batch_size]
+            pairs = [[query, document] for document in batch_documents]
+            inputs = self.rerank_tokenizer(
+                pairs,
+                padding=True,
+                truncation=True,
+                return_tensors='pt',
+                max_length=self.config.max_length,
+            ).to(self.device)
+            with torch.inference_mode():
+                batch_scores = (
+                    self.rerank_model(**inputs, return_dict=True)
+                    .logits.view(-1)
+                    .float()
+                    .cpu()
+                    .tolist()
+                )
+            scores.extend(batch_scores)
 
-        # Tokenize and predict relevance scores
-        with torch.no_grad():
-            inputs = self.rerank_tokenizer(pairs, padding=True, truncation=True, return_tensors='pt',
-                                           max_length=512).to(self.device)
-            scores = self.rerank_model(**inputs, return_dict=True).logits.view(-1).float().cpu().tolist()
+        if len(scores) != len(documents):
+            raise RuntimeError(
+                f"Reranker returned {len(scores)} scores for {len(documents)} documents"
+            )
 
         # Pair documents with their scores, sort by scores in descending order
         if is_sorted:
