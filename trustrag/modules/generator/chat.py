@@ -76,6 +76,19 @@ class OpenAIChat(Base):
         if not base_url: base_url="https://www.dmxapi.com/v1"
         super().__init__(key, model_name, base_url)
 
+
+class AtlasCloudChat(Base):
+    """OpenAI-compatible chat client for Atlas Cloud."""
+
+    def __init__(
+            self,
+            key,
+            model_name="openai/gpt-4.1-mini",
+            base_url="https://api.atlascloud.ai/v1"):
+        if not base_url:
+            base_url = "https://api.atlascloud.ai/v1"
+        super().__init__(key, model_name, base_url)
+
 class DeepSeekChat(Base):
     """
     https://platform.deepseek.com/usage
