@@ -157,6 +157,23 @@ from trustrag.modules.retrieval.dense_retriever import DenseRetrieverConfig
 from trustrag.modules.retrieval.hybrid_retriever import HybridRetriever, HybridRetrieverConfig
 ```
 
+Atlas Cloud can be used as an optional OpenAI-compatible generator:
+
+```python
+import os
+
+from trustrag.modules.generator.chat import AtlasCloudChat
+
+chat = AtlasCloudChat(
+    key=os.environ["ATLASCLOUD_API_KEY"],
+    model_name=os.getenv("ATLASCLOUD_MODEL", "openai/gpt-4.1-mini"),
+)
+answer, total_tokens = chat.chat(
+    system="Answer using the supplied context.",
+    history=[{"role": "user", "content": "What is TrustRAG?"}],
+)
+```
+
 ### 3 Document Parsing and Chunking
 
 ```text
